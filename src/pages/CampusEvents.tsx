@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,7 +77,7 @@ const CampusEvents = () => {
     }
   ];
 
-  const whatsappNumber = "+254700000000"; // Replace with actual number
+  const whatsappNumber = "+254790767347";
 
   const handleRSVP = (eventTitle: string, eventPrice: string) => {
     const message = `I'd like to RSVP for "${eventTitle}" (${eventPrice}). Please send me the details.`;

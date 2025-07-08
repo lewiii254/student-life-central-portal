@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,7 +56,7 @@ const BicycleRentals = () => {
     { duration: "Weekly", description: "Best value for regular use" }
   ];
 
-  const whatsappNumber = "+254700000000"; // Replace with actual number
+  const whatsappNumber = "+254790767347";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

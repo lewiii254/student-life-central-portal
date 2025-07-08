@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -118,7 +117,7 @@ const HouseholdItems = () => {
     }
   ];
 
-  const whatsappNumber = "+254700000000";
+  const whatsappNumber = "+254790767347";
 
   const openWhatsApp = (message: string) => {
     const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
