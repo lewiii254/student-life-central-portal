@@ -102,7 +102,7 @@ export const DeliveryServices = () => {
   const totalEarnings = deliveryRequests?.reduce((sum, r) => sum + (r.delivery_fee || 0), 0) || 0;
 
   // Group by service type
-  const serviceStats = deliveryRequests?.reduce((acc: any, request) => {
+  const serviceStats = deliveryRequests?.reduce((acc: Record<string, number>, request) => {
     const service = request.service_type;
     if (!acc[service]) {
       acc[service] = 0;
