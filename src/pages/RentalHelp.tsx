@@ -5,15 +5,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Home, ArrowLeft, MessageCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { MapPin, Home, ArrowLeft, MessageCircle, CheckCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const formSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  location: z.string().min(1, "Please select a preferred location"),
+  budget: z.string().min(1, "Please select your budget range"),
+  additionalInfo: z.string().optional(),
+});
 
 const RentalHelp = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    location: "",
-    budget: ""
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      location: "",
+      budget: "",
+      additionalInfo: "",
+    },
   });
 
   const locations = {
@@ -43,11 +66,120 @@ const RentalHelp = () => {
     "Kirindine": []
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Handle form submission
+  const handleWhatsAppChat = () => {
+    const message = encodeURIComponent(
+      `Hi! I'm interested in your rental help service. I'd like to discuss my room search requirements.`
+    );
+    const whatsappUrl = `https://wa.me/254790767347?text=${message}`;
+    window.open(whatsappUrl, '_blank');
   };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
+    
+    try {
+      // Convert budget range to a number for easier processing
+      const budgetMapping: { [key: string]: number } = {
+        "under-5000": 4000,
+        "5000-8000": 6500,
+        "8000-12000": 10000,
+        "12000-15000": 13500,
+        "15000-20000": 17500,
+        "above-20000": 25000
+      };
+
+      const { data, error } = await supabase
+        .from('rental_requests')
+        .insert([
+          {
+            name: values.name,
+            contact: values.phone,
+            preferred_location: values.location,
+            budget: budgetMapping[values.budget] || 0,
+            status: 'pending',
+            // Store additional info in a JSON field if needed
+          }
+        ])
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      setSubmissionSuccess(true);
+      toast({
+        title: "Request Submitted Successfully!",
+        description: "We'll contact you within 24 hours with rental options.",
+      });
+
+      // Auto-redirect to WhatsApp after successful submission
+      setTimeout(() => {
+        const detailedMessage = encodeURIComponent(
+          `Hi! I've just submitted a rental request on your website. Here are my details:
+          
+Name: ${values.name}
+Phone: ${values.phone}
+Preferred Location: ${values.location}
+Budget: ${values.budget.replace('-', ' to KES ').replace('under-', 'Under KES ').replace('above-', 'Above KES ')}
+${values.additionalInfo ? `Additional Info: ${values.additionalInfo}` : ''}
+
+Reference ID: ${data?.[0]?.id || 'N/A'}
+
+Please help me find a suitable room. Thank you!`
+        );
+        const whatsappUrl = `https://wa.me/254790767347?text=${detailedMessage}`;
+        window.open(whatsappUrl, '_blank');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error submitting rental request:', error);
+      toast({
+        title: "Submission Failed",
+        description: "There was an error submitting your request. Please try again or contact us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (submissionSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
+        <Card className="w-full max-w-lg mx-4">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl text-green-600">Request Submitted!</CardTitle>
+            <CardDescription>
+              Your rental search request has been successfully submitted.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-gray-600">
+              We'll contact you within 24 hours with available rental options that match your criteria.
+            </p>
+            <p className="text-sm text-gray-500">
+              You'll be redirected to WhatsApp shortly to continue the conversation.
+            </p>
+            <div className="space-y-2">
+              <Button onClick={handleWhatsAppChat} className="w-full bg-green-600 hover:bg-green-700">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Continue on WhatsApp
+              </Button>
+              <Link to="/">
+                <Button variant="outline" className="w-full">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Home
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -161,7 +293,7 @@ const RentalHelp = () => {
             </Card>
           </div>
 
-          {/* Booking Form */}
+          {/* Enhanced Booking Form */}
           <div>
             <Card>
               <CardHeader>
@@ -169,84 +301,143 @@ const RentalHelp = () => {
                 <CardDescription>Fill out your details and we'll find the perfect room for you</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      placeholder="Enter your full name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      required
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your full name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      placeholder="e.g., +254 700 000 000"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      required
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., +254 700 000 000" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Include country code for WhatsApp integration
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Preferred Location</Label>
-                    <Select onValueChange={(value) => setFormData({...formData, location: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select preferred area" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(locations).map(([area, subAreas]) => (
-                          <div key={area}>
-                            <SelectItem value={area} className="font-semibold">
-                              {area}
-                            </SelectItem>
-                            {subAreas.map((subArea) => (
-                              <SelectItem key={subArea} value={`${area} - ${subArea}`} className="pl-6">
-                                {subArea}
-                              </SelectItem>
-                            ))}
-                          </div>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preferred Location</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select preferred area" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(locations).map(([area, subAreas]) => (
+                                <div key={area}>
+                                  <SelectItem value={area} className="font-semibold">
+                                    {area}
+                                  </SelectItem>
+                                  {subAreas.map((subArea) => (
+                                    <SelectItem key={subArea} value={`${area} - ${subArea}`} className="pl-6">
+                                      {subArea}
+                                    </SelectItem>
+                                  ))}
+                                </div>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="budget">Monthly Budget (KES)</Label>
-                    <Select onValueChange={(value) => setFormData({...formData, budget: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your budget range" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="under-5000">Under KES 5,000</SelectItem>
-                        <SelectItem value="5000-8000">KES 5,000 - 8,000</SelectItem>
-                        <SelectItem value="8000-12000">KES 8,000 - 12,000</SelectItem>
-                        <SelectItem value="12000-15000">KES 12,000 - 15,000</SelectItem>
-                        <SelectItem value="15000-20000">KES 15,000 - 20,000</SelectItem>
-                        <SelectItem value="above-20000">Above KES 20,000</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <FormField
+                      control={form.control}
+                      name="budget"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Monthly Budget (KES)</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your budget range" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="under-5000">Under KES 5,000</SelectItem>
+                              <SelectItem value="5000-8000">KES 5,000 - 8,000</SelectItem>
+                              <SelectItem value="8000-12000">KES 8,000 - 12,000</SelectItem>
+                              <SelectItem value="12000-15000">KES 12,000 - 15,000</SelectItem>
+                              <SelectItem value="15000-20000">KES 15,000 - 20,000</SelectItem>
+                              <SelectItem value="above-20000">Above KES 20,000</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <div className="space-y-4">
-                    <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 text-lg py-6">
-                      Start My Room Search - KES 200
-                    </Button>
-                    
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      className="w-full border-green-500 text-green-600 hover:bg-green-50"
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Chat on WhatsApp First
-                    </Button>
-                  </div>
-                </form>
+                    <FormField
+                      control={form.control}
+                      name="additionalInfo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Additional Requirements (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Any specific requirements? (e.g., pet-friendly, parking, utilities included)"
+                              className="resize-none"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="space-y-4">
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-blue-500 hover:bg-blue-600 text-lg py-6"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Submitting Request...
+                          </>
+                        ) : (
+                          "Start My Room Search - KES 200"
+                        )}
+                      </Button>
+                      
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full border-green-500 text-green-600 hover:bg-green-50"
+                        onClick={handleWhatsAppChat}
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Chat on WhatsApp First
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
           </div>
