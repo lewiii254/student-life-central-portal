@@ -29,11 +29,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={
-              <AuthGuard>
-                <Index />
-              </AuthGuard>
-            } />
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<AboutUs />} />
             <Route path="/rental-help" element={
               <AuthGuard>
                 <RentalHelp />
@@ -62,11 +59,6 @@ const App = () => (
             <Route path="/events" element={
               <AuthGuard>
                 <CampusEvents />
-              </AuthGuard>
-            } />
-            <Route path="/about" element={
-              <AuthGuard>
-                <AboutUs />
               </AuthGuard>
             } />
             <Route path="/admin" element={

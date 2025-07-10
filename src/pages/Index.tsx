@@ -1,10 +1,11 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import UserMenu from '@/components/UserMenu';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   GraduationCap, 
   Home, 
@@ -22,6 +23,16 @@ import {
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleServiceClick = (link: string) => {
+    if (!user) {
+      navigate('/auth');
+    } else {
+      navigate(link);
+    }
+  };
 
   const services = [
     {
@@ -107,12 +118,14 @@ const Index = () => {
               <Link to="/about" className="text-gray-600 hover:text-blue-600 transition-colors">
                 About
               </Link>
-              <Link to="/admin" className="text-gray-600 hover:text-blue-600 transition-colors">
-                Admin
-              </Link>
+              {!user && (
+                <Link to="/auth" className="text-gray-600 hover:text-blue-600 transition-colors">
+                  Sign In
+                </Link>
+              )}
             </nav>
 
-            <UserMenu />
+            {user && <UserMenu />}
           </div>
         </div>
       </header>
@@ -164,7 +177,7 @@ const Index = () => {
             {services.map((service) => {
               const Icon = service.icon;
               return (
-                <Link key={service.title} to={service.link}>
+                <div key={service.title} onClick={() => handleServiceClick(service.link)} className="cursor-pointer">
                   <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
                     <CardHeader>
                       <div className="flex items-center justify-between">
@@ -185,7 +198,7 @@ const Index = () => {
                       </CardDescription>
                     </CardContent>
                   </Card>
-                </Link>
+                </div>
               );
             })}
           </div>
@@ -315,20 +328,19 @@ const Index = () => {
             <div>
               <h3 className="font-semibold mb-4">Services</h3>
               <ul className="space-y-2 text-gray-300">
-                <li><Link to="/rental-help" className="hover:text-white transition-colors">Rental Help</Link></li>
-                <li><Link to="/study-essentials" className="hover:text-white transition-colors">Study Essentials</Link></li>
-                <li><Link to="/household-items" className="hover:text-white transition-colors">Household Items</Link></li>
-                <li><Link to="/delivery" className="hover:text-white transition-colors">Delivery</Link></li>
+                <li><button onClick={() => handleServiceClick('/rental-help')} className="hover:text-white transition-colors text-left">Rental Help</button></li>
+                <li><button onClick={() => handleServiceClick('/study-essentials')} className="hover:text-white transition-colors text-left">Study Essentials</button></li>
+                <li><button onClick={() => handleServiceClick('/household-items')} className="hover:text-white transition-colors text-left">Household Items</button></li>
+                <li><button onClick={() => handleServiceClick('/delivery')} className="hover:text-white transition-colors text-left">Delivery</button></li>
               </ul>
             </div>
             
             <div>
               <h3 className="font-semibold mb-4">More</h3>
               <ul className="space-y-2 text-gray-300">
-                <li><Link to="/bicycle-rentals" className="hover:text-white transition-colors">Bicycle Rentals</Link></li>
-                <li><Link to="/events" className="hover:text-white transition-colors">Campus Events</Link></li>
+                <li><button onClick={() => handleServiceClick('/bicycle-rentals')} className="hover:text-white transition-colors text-left">Bicycle Rentals</button></li>
+                <li><button onClick={() => handleServiceClick('/events')} className="hover:text-white transition-colors text-left">Campus Events</button></li>
                 <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><Link to="/admin" className="hover:text-white transition-colors">Admin</Link></li>
               </ul>
             </div>
             
