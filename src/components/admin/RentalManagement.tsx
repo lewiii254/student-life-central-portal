@@ -15,6 +15,7 @@ import {
 import { 
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -28,7 +29,9 @@ import {
   MapPin,
   User,
   Phone,
-  Download
+  Download,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,6 +40,7 @@ import { toast } from 'sonner';
 export const RentalManagement = () => {
   const [newLocation, setNewLocation] = useState({ name: '', description: '' });
   const [searchFee, setSearchFee] = useState(200);
+  const [showAddLocationDialog, setShowAddLocationDialog] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch rental requests
@@ -94,6 +98,10 @@ export const RentalManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rental-requests'] });
       toast.success('Request updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update request');
+      console.error('Error updating request:', error);
     }
   });
 
@@ -109,12 +117,37 @@ export const RentalManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rental-locations'] });
       setNewLocation({ name: '', description: '' });
+      setShowAddLocationDialog(false);
       toast.success('Location added successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to add location');
+      console.error('Error adding location:', error);
+    }
+  });
+
+  // Delete location
+  const deleteLocation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('rental_locations')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rental-locations'] });
+      toast.success('Location deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete location');
+      console.error('Error deleting location:', error);
     }
   });
 
   // Update search fee
-  const updateSearchFee = useMutation({
+  const updateSearchFeeMutation = useMutation({
     mutationFn: async (fee: number) => {
       const { error } = await supabase
         .from('rental_settings')
@@ -126,6 +159,10 @@ export const RentalManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rental-settings'] });
       toast.success('Search fee updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update search fee');
+      console.error('Error updating search fee:', error);
     }
   });
 
@@ -164,17 +201,24 @@ export const RentalManagement = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  // Initialize search fee from settings
+  React.useEffect(() => {
+    if (settings?.search_fee) {
+      setSearchFee(settings.search_fee);
+    }
+  }, [settings]);
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold text-gray-900">Rental Management</h2>
-        <Button onClick={exportData} variant="outline">
+        <Button onClick={exportData} variant="outline" disabled={!rentalRequests?.length}>
           <Download className="h-4 w-4 mr-2" />
           Export Data
         </Button>
       </div>
 
-      {/* Settings Card */}
+      {/* Settings Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -186,23 +230,23 @@ export const RentalManagement = () => {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Current Search Fee</label>
+                <label className="text-sm font-medium">Current Search Fee (KES)</label>
                 <div className="flex items-center space-x-2 mt-2">
                   <Input
                     type="number"
                     value={searchFee}
                     onChange={(e) => setSearchFee(Number(e.target.value))}
                     className="w-32"
+                    min="0"
                   />
-                  <span className="text-sm text-gray-600">KES</span>
+                  <Button 
+                    onClick={() => updateSearchFeeMutation.mutate(searchFee)}
+                    disabled={updateSearchFeeMutation.isPending}
+                  >
+                    {updateSearchFeeMutation.isPending ? 'Updating...' : 'Update Fee'}
+                  </Button>
                 </div>
               </div>
-              <Button 
-                onClick={() => updateSearchFee.mutate(searchFee)}
-                disabled={updateSearchFee.isPending}
-              >
-                Update Fee
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -215,25 +259,41 @@ export const RentalManagement = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <Input
-                placeholder="Location name"
-                value={newLocation.name}
-                onChange={(e) => setNewLocation(prev => ({ ...prev, name: e.target.value }))}
-              />
-              <Input
-                placeholder="Description"
-                value={newLocation.description}
-                onChange={(e) => setNewLocation(prev => ({ ...prev, description: e.target.value }))}
-              />
-              <Button 
-                onClick={() => addLocation.mutate(newLocation)}
-                disabled={!newLocation.name || addLocation.isPending}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Location
-              </Button>
-            </div>
+            <Dialog open={showAddLocationDialog} onOpenChange={setShowAddLocationDialog}>
+              <DialogTrigger asChild>
+                <Button className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Location
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Rental Location</DialogTitle>
+                  <DialogDescription>
+                    Add a new location where students can find rentals.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Location name (e.g., Westlands)"
+                    value={newLocation.name}
+                    onChange={(e) => setNewLocation(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Description (e.g., Near shopping centers)"
+                    value={newLocation.description}
+                    onChange={(e) => setNewLocation(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                  <Button 
+                    onClick={() => addLocation.mutate(newLocation)}
+                    disabled={!newLocation.name || addLocation.isPending}
+                    className="w-full"
+                  >
+                    {addLocation.isPending ? 'Adding...' : 'Add Location'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
       </div>
@@ -246,6 +306,8 @@ export const RentalManagement = () => {
         <CardContent>
           {loadingRequests ? (
             <div className="text-center py-8">Loading requests...</div>
+          ) : rentalRequests?.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No rental requests yet.</div>
           ) : (
             <Table>
               <TableHeader>
@@ -272,27 +334,48 @@ export const RentalManagement = () => {
                     <TableCell>{request.assigned_agent || 'Unassigned'}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          onClick={() => updateRequestStatus.mutate({
-                            id: request.id,
-                            status: 'completed',
-                            assigned_agent: 'Admin'
-                          })}
-                        >
-                          Mark Found
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateRequestStatus.mutate({
-                            id: request.id,
-                            status: 'in_progress',
-                            assigned_agent: 'Admin'
-                          })}
-                        >
-                          Assign
-                        </Button>
+                        {request.status === 'pending' && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => updateRequestStatus.mutate({
+                                id: request.id,
+                                status: 'in_progress',
+                                assigned_agent: 'Admin'
+                              })}
+                              disabled={updateRequestStatus.isPending}
+                            >
+                              <Clock className="h-3 w-3 mr-1" />
+                              Assign
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateRequestStatus.mutate({
+                                id: request.id,
+                                status: 'completed',
+                                assigned_agent: 'Admin'
+                              })}
+                              disabled={updateRequestStatus.isPending}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Found
+                            </Button>
+                          </>
+                        )}
+                        {request.status === 'in_progress' && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateRequestStatus.mutate({
+                              id: request.id,
+                              status: 'completed'
+                            })}
+                            disabled={updateRequestStatus.isPending}
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Complete
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -317,12 +400,17 @@ export const RentalManagement = () => {
                 <div key={location.id} className="p-4 border rounded-lg">
                   <h3 className="font-semibold">{location.name}</h3>
                   <p className="text-sm text-gray-600 mt-1">{location.description}</p>
-                  <div className="mt-3 flex items-center space-x-2">
+                  <div className="mt-3 flex items-center justify-between">
                     <Badge variant={location.available ? "default" : "secondary"}>
                       {location.available ? 'Available' : 'Unavailable'}
                     </Badge>
-                    <Button size="sm" variant="outline">
-                      <Edit className="h-3 w-3" />
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => deleteLocation.mutate(location.id)}
+                      disabled={deleteLocation.isPending}
+                    >
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>

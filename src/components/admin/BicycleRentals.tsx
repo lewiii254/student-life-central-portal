@@ -16,6 +16,7 @@ import {
 import { 
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -27,7 +28,10 @@ import {
   Calendar,
   DollarSign,
   Users,
-  Wrench
+  Wrench,
+  CheckCircle,
+  Clock,
+  Trash2
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,6 +46,7 @@ export const BicycleRentals = () => {
     status: 'available'
   });
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingBicycle, setEditingBicycle] = useState<any>(null);
   const queryClient = useQueryClient();
 
   // Fetch bicycles
@@ -97,6 +102,51 @@ export const BicycleRentals = () => {
       });
       setShowAddDialog(false);
       toast.success('Bicycle added successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to add bicycle');
+      console.error('Error adding bicycle:', error);
+    }
+  });
+
+  // Update bicycle
+  const updateBicycle = useMutation({
+    mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
+      const { error } = await supabase
+        .from('bicycles')
+        .update(updates)
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bicycles'] });
+      setEditingBicycle(null);
+      toast.success('Bicycle updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update bicycle');
+      console.error('Error updating bicycle:', error);
+    }
+  });
+
+  // Delete bicycle
+  const deleteBicycle = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('bicycles')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bicycles'] });
+      toast.success('Bicycle deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete bicycle');
+      console.error('Error deleting bicycle:', error);
     }
   });
 
@@ -113,6 +163,10 @@ export const BicycleRentals = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bicycles'] });
       toast.success('Bicycle status updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update bicycle status');
+      console.error('Error updating status:', error);
     }
   });
 
@@ -129,6 +183,10 @@ export const BicycleRentals = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bicycle-bookings'] });
       toast.success('Booking status updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update booking status');
+      console.error('Error updating booking:', error);
     }
   });
 
@@ -171,6 +229,9 @@ export const BicycleRentals = () => {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Add New Bicycle</DialogTitle>
+              <DialogDescription>
+                Add a new bicycle to your rental fleet.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <Input
@@ -186,14 +247,16 @@ export const BicycleRentals = () => {
               <Input
                 type="number"
                 placeholder="Hourly rate (KES)"
-                value={newBicycle.hourly_rate}
+                value={newBicycle.hourly_rate || ''}
                 onChange={(e) => setNewBicycle(prev => ({ ...prev, hourly_rate: Number(e.target.value) }))}
+                min="0"
               />
               <Input
                 type="number"
                 placeholder="Daily rate (KES)"
-                value={newBicycle.daily_rate}
+                value={newBicycle.daily_rate || ''}
                 onChange={(e) => setNewBicycle(prev => ({ ...prev, daily_rate: Number(e.target.value) }))}
+                min="0"
               />
               <select 
                 className="w-full p-2 border rounded-md"
@@ -206,10 +269,10 @@ export const BicycleRentals = () => {
               </select>
               <Button 
                 onClick={() => addBicycle.mutate(newBicycle)}
-                disabled={!newBicycle.name || addBicycle.isPending}
+                disabled={!newBicycle.name || !newBicycle.hourly_rate || addBicycle.isPending}
                 className="w-full"
               >
-                Add Bicycle
+                {addBicycle.isPending ? 'Adding...' : 'Add Bicycle'}
               </Button>
             </div>
           </DialogContent>
@@ -275,6 +338,8 @@ export const BicycleRentals = () => {
         <CardContent>
           {loadingBicycles ? (
             <div className="text-center py-8">Loading bicycles...</div>
+          ) : bicycles?.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No bicycles added yet.</div>
           ) : (
             <Table>
               <TableHeader>
@@ -307,9 +372,53 @@ export const BicycleRentals = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-3 w-3" />
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit Bicycle</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <Input
+                                placeholder="Bicycle name"
+                                defaultValue={bicycle.name}
+                                onChange={(e) => setEditingBicycle({...bicycle, name: e.target.value})}
+                              />
+                              <Textarea
+                                placeholder="Description"
+                                defaultValue={bicycle.description || ''}
+                                onChange={(e) => setEditingBicycle({...bicycle, description: e.target.value})}
+                              />
+                              <Input
+                                type="number"
+                                placeholder="Hourly rate"
+                                defaultValue={bicycle.hourly_rate}
+                                onChange={(e) => setEditingBicycle({...bicycle, hourly_rate: Number(e.target.value)})}
+                              />
+                              <Input
+                                type="number"
+                                placeholder="Daily rate"
+                                defaultValue={bicycle.daily_rate}
+                                onChange={(e) => setEditingBicycle({...bicycle, daily_rate: Number(e.target.value)})}
+                              />
+                              <Button 
+                                onClick={() => updateBicycle.mutate({
+                                  id: bicycle.id,
+                                  updates: editingBicycle || bicycle
+                                })}
+                                disabled={updateBicycle.isPending}
+                                className="w-full"
+                              >
+                                {updateBicycle.isPending ? 'Updating...' : 'Update Bicycle'}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        
                         {bicycle.status === 'available' && (
                           <Button
                             size="sm"
@@ -318,10 +427,12 @@ export const BicycleRentals = () => {
                               id: bicycle.id,
                               status: 'maintenance'
                             })}
+                            disabled={updateBicycleStatus.isPending}
                           >
                             <Wrench className="h-3 w-3" />
                           </Button>
                         )}
+                        
                         {bicycle.status === 'maintenance' && (
                           <Button
                             size="sm"
@@ -329,10 +440,20 @@ export const BicycleRentals = () => {
                               id: bicycle.id,
                               status: 'available'
                             })}
+                            disabled={updateBicycleStatus.isPending}
                           >
-                            Mark Available
+                            Available
                           </Button>
                         )}
+                        
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => deleteBicycle.mutate(bicycle.id)}
+                          disabled={deleteBicycle.isPending}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -351,6 +472,8 @@ export const BicycleRentals = () => {
         <CardContent>
           {loadingBookings ? (
             <div className="text-center py-8">Loading bookings...</div>
+          ) : !bookings?.length ? (
+            <div className="text-center py-8 text-gray-500">No bookings yet.</div>
           ) : (
             <Table>
               <TableHeader>
@@ -394,13 +517,12 @@ export const BicycleRentals = () => {
                               id: booking.id,
                               status: 'completed'
                             })}
+                            disabled={updateBookingStatus.isPending}
                           >
+                            <CheckCircle className="h-3 w-3 mr-1" />
                             Complete
                           </Button>
                         )}
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-3 w-3" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

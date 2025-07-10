@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   ShoppingCart, 
   MessageSquare, 
@@ -10,7 +11,8 @@ import {
   TrendingUp,
   Users,
   AlertTriangle,
-  DollarSign
+  DollarSign,
+  Plus
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -71,7 +73,7 @@ export const DashboardStats = () => {
       bg: 'bg-purple-50'
     },
     {
-      title: 'Rentals Today',
+      title: 'Active Rentals',
       value: stats?.rentalsToday || 0,
       icon: Bike,
       color: 'text-orange-600',
@@ -181,33 +183,6 @@ export const DashboardStats = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button className="p-4 text-center rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 transition-colors">
-              <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm font-medium">Add Product</p>
-            </button>
-            <button className="p-4 text-center rounded-lg border-2 border-dashed border-gray-300 hover:border-green-500 transition-colors">
-              <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm font-medium">Create Event</p>
-            </button>
-            <button className="p-4 text-center rounded-lg border-2 border-dashed border-gray-300 hover:border-purple-500 transition-colors">
-              <Bike className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm font-medium">Add Bicycle</p>
-            </button>
-            <button className="p-4 text-center rounded-lg border-2 border-dashed border-gray-300 hover:border-orange-500 transition-colors">
-              <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <p className="text-sm font-medium">Send Broadcast</p>
-            </button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

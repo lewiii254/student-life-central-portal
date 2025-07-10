@@ -16,6 +16,7 @@ import {
 import { 
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -28,7 +29,10 @@ import {
   Package,
   AlertTriangle,
   Eye,
-  MessageSquare
+  MessageSquare,
+  CheckCircle,
+  Clock,
+  Truck
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,6 +49,7 @@ export const NerdyCart = () => {
     is_combo: false
   });
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   const queryClient = useQueryClient();
 
   // Fetch products
@@ -97,6 +102,51 @@ export const NerdyCart = () => {
       });
       setShowAddDialog(false);
       toast.success('Product added successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to add product');
+      console.error('Error adding product:', error);
+    }
+  });
+
+  // Update product
+  const updateProduct = useMutation({
+    mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
+      const { error } = await supabase
+        .from('products')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setEditingProduct(null);
+      toast.success('Product updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update product');
+      console.error('Error updating product:', error);
+    }
+  });
+
+  // Delete product
+  const deleteProduct = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Product deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete product');
+      console.error('Error deleting product:', error);
     }
   });
 
@@ -113,6 +163,10 @@ export const NerdyCart = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Order status updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update order status');
+      console.error('Error updating order:', error);
     }
   });
 
@@ -156,6 +210,9 @@ export const NerdyCart = () => {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Add New Product</DialogTitle>
+              <DialogDescription>
+                Add a new product to your Nerdy Cart inventory.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <Input
@@ -171,27 +228,40 @@ export const NerdyCart = () => {
               <Input
                 type="number"
                 placeholder="Price (KES)"
-                value={newProduct.price}
+                value={newProduct.price || ''}
                 onChange={(e) => setNewProduct(prev => ({ ...prev, price: Number(e.target.value) }))}
+                min="0"
               />
               <Input
                 type="number"
                 placeholder="Stock quantity"
-                value={newProduct.stock_quantity}
+                value={newProduct.stock_quantity || ''}
                 onChange={(e) => setNewProduct(prev => ({ ...prev, stock_quantity: Number(e.target.value) }))}
+                min="0"
               />
               <Input
                 type="number"
                 placeholder="Low stock threshold"
-                value={newProduct.low_stock_threshold}
+                value={newProduct.low_stock_threshold || ''}
                 onChange={(e) => setNewProduct(prev => ({ ...prev, low_stock_threshold: Number(e.target.value) }))}
+                min="1"
               />
+              <select 
+                className="w-full p-2 border rounded-md"
+                value={newProduct.category}
+                onChange={(e) => setNewProduct(prev => ({ ...prev, category: e.target.value }))}
+              >
+                <option value="study_essentials">Study Essentials</option>
+                <option value="lab_coats">Lab Coats</option>
+                <option value="calculators">Calculators</option>
+                <option value="stationery">Stationery</option>
+              </select>
               <Button 
                 onClick={() => addProduct.mutate(newProduct)}
-                disabled={!newProduct.name || addProduct.isPending}
+                disabled={!newProduct.name || !newProduct.price || addProduct.isPending}
                 className="w-full"
               >
-                Add Product
+                {addProduct.isPending ? 'Adding...' : 'Add Product'}
               </Button>
             </div>
           </DialogContent>
@@ -262,6 +332,8 @@ export const NerdyCart = () => {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">Loading products...</div>
+          ) : products?.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No products added yet. Add your first product!</div>
           ) : (
             <Table>
               <TableHeader>
@@ -291,11 +363,59 @@ export const NerdyCart = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button size="sm" variant="outline">
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Eye className="h-3 w-3" />
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline">
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Edit Product</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <Input
+                                  placeholder="Product name"
+                                  defaultValue={product.name}
+                                  onChange={(e) => setEditingProduct({...product, name: e.target.value})}
+                                />
+                                <Textarea
+                                  placeholder="Description"
+                                  defaultValue={product.description || ''}
+                                  onChange={(e) => setEditingProduct({...product, description: e.target.value})}
+                                />
+                                <Input
+                                  type="number"
+                                  placeholder="Price (KES)"
+                                  defaultValue={product.price}
+                                  onChange={(e) => setEditingProduct({...product, price: Number(e.target.value)})}
+                                />
+                                <Input
+                                  type="number"
+                                  placeholder="Stock quantity"
+                                  defaultValue={product.stock_quantity}
+                                  onChange={(e) => setEditingProduct({...product, stock_quantity: Number(e.target.value)})}
+                                />
+                                <Button 
+                                  onClick={() => updateProduct.mutate({
+                                    id: product.id,
+                                    updates: editingProduct || product
+                                  })}
+                                  disabled={updateProduct.isPending}
+                                  className="w-full"
+                                >
+                                  {updateProduct.isPending ? 'Updating...' : 'Update Product'}
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => deleteProduct.mutate(product.id)}
+                            disabled={deleteProduct.isPending}
+                          >
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
                       </TableCell>
@@ -314,67 +434,80 @@ export const NerdyCart = () => {
           <CardTitle>Recent Orders</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders?.slice(0, 10).map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-mono text-sm">
-                    {order.id.slice(0, 8)}...
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{order.customer_name}</div>
-                      <div className="text-sm text-gray-500">{order.customer_contact}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {Array.isArray(order.items) ? order.items.length : 0} items
-                    </div>
-                  </TableCell>
-                  <TableCell>KES {order.total_amount.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <Badge className={getOrderStatus(order.status)}>{order.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      {order.status === 'pending' && (
-                        <Button
-                          size="sm"
-                          onClick={() => updateOrderStatus.mutate({ id: order.id, status: 'ready' })}
-                        >
-                          Mark Ready
-                        </Button>
-                      )}
-                      {order.status === 'ready' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => sendOrderNotification(order)}
-                        >
-                          <MessageSquare className="h-3 w-3 mr-1" />
-                          Notify
-                        </Button>
-                      )}
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {!orders?.length ? (
+            <div className="text-center py-8 text-gray-500">No orders yet.</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order ID</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {orders?.slice(0, 10).map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-mono text-sm">
+                      {order.id.slice(0, 8)}...
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{order.customer_name}</div>
+                        <div className="text-sm text-gray-500">{order.customer_contact}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {Array.isArray(order.items) ? order.items.length : 0} items
+                      </div>
+                    </TableCell>
+                    <TableCell>KES {order.total_amount.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <Badge className={getOrderStatus(order.status)}>{order.status}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        {order.status === 'pending' && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateOrderStatus.mutate({ id: order.id, status: 'ready' })}
+                            disabled={updateOrderStatus.isPending}
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Ready
+                          </Button>
+                        )}
+                        {order.status === 'ready' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => sendOrderNotification(order)}
+                            >
+                              <MessageSquare className="h-3 w-3 mr-1" />
+                              Notify
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => updateOrderStatus.mutate({ id: order.id, status: 'delivered' })}
+                              disabled={updateOrderStatus.isPending}
+                            >
+                              <Truck className="h-3 w-3 mr-1" />
+                              Delivered
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -16,18 +16,20 @@ import {
 import { 
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { 
-  Package, 
+  Home, 
   Plus, 
   Edit, 
+  Trash2, 
   Store,
-  MessageSquare,
-  TrendingUp,
-  ExternalLink
+  ExternalLink,
+  Package,
+  DollarSign
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,10 +44,11 @@ export const SettleBox = () => {
     whatsapp_link: ''
   });
   const [newItem, setNewItem] = useState({
+    partner_shop_id: '',
     name: '',
     price: 0,
     condition: 'new',
-    partner_shop_id: ''
+    image_url: ''
   });
   const [showAddShopDialog, setShowAddShopDialog] = useState(false);
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
@@ -74,9 +77,7 @@ export const SettleBox = () => {
         .select(`
           *,
           partner_shops (
-            name,
-            contact,
-            whatsapp_link
+            name
           )
         `)
         .order('created_at', { ascending: false });
@@ -87,7 +88,7 @@ export const SettleBox = () => {
   });
 
   // Add new partner shop
-  const addPartnerShop = useMutation({
+  const addShop = useMutation({
     mutationFn: async (shop: typeof newShop) => {
       const { error } = await supabase
         .from('partner_shops')
@@ -106,11 +107,15 @@ export const SettleBox = () => {
       });
       setShowAddShopDialog(false);
       toast.success('Partner shop added successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to add partner shop');
+      console.error('Error adding shop:', error);
     }
   });
 
   // Add new household item
-  const addHouseholdItem = useMutation({
+  const addItem = useMutation({
     mutationFn: async (item: typeof newItem) => {
       const { error } = await supabase
         .from('household_items')
@@ -121,43 +126,105 @@ export const SettleBox = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['household-items'] });
       setNewItem({
+        partner_shop_id: '',
         name: '',
         price: 0,
         condition: 'new',
-        partner_shop_id: ''
+        image_url: ''
       });
       setShowAddItemDialog(false);
-      toast.success('Household item added successfully');
+      toast.success('Item added successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to add item');
+      console.error('Error adding item:', error);
     }
   });
 
-  const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case 'new': return 'bg-green-100 text-green-800';
-      case 'used': return 'bg-yellow-100 text-yellow-800';
-      case 'refurbished': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+  // Delete partner shop
+  const deleteShop = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('partner_shops')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partner-shops'] });
+      queryClient.invalidateQueries({ queryKey: ['household-items'] });
+      toast.success('Partner shop deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete partner shop');
+      console.error('Error deleting shop:', error);
     }
-  };
+  });
 
-  const totalCommission = partnerShops?.reduce((sum, shop) => sum + (shop.commission_rate || 0), 0) || 0;
+  // Delete household item
+  const deleteItem = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('household_items')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['household-items'] });
+      toast.success('Item deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete item');
+      console.error('Error deleting item:', error);
+    }
+  });
+
+  // Toggle shop active status
+  const toggleShopStatus = useMutation({
+    mutationFn: async ({ id, active }: { id: string, active: boolean }) => {
+      const { error } = await supabase
+        .from('partner_shops')
+        .update({ active })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partner-shops'] });
+      toast.success('Shop status updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update shop status');
+      console.error('Error updating shop:', error);
+    }
+  });
+
+  const totalShops = partnerShops?.length || 0;
   const activeShops = partnerShops?.filter(shop => shop.active).length || 0;
+  const totalItems = householdItems?.length || 0;
+  const availableItems = householdItems?.filter(item => item.available).length || 0;
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold text-gray-900">Settle Box - Household Essentials</h2>
+        <h2 className="text-3xl font-bold text-gray-900">Settle Box - Household Items</h2>
         <div className="flex space-x-2">
           <Dialog open={showAddShopDialog} onOpenChange={setShowAddShopDialog}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Store className="h-4 w-4 mr-2" />
-                Add Shop
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Partner Shop
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Partner Shop</DialogTitle>
+                <DialogTitle>Add New Partner Shop</DialogTitle>
+                <DialogDescription>
+                  Add a new partner shop to sell household items.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <Input
@@ -166,7 +233,7 @@ export const SettleBox = () => {
                   onChange={(e) => setNewShop(prev => ({ ...prev, name: e.target.value }))}
                 />
                 <Input
-                  placeholder="Contact number"
+                  placeholder="Contact (phone/email)"
                   value={newShop.contact}
                   onChange={(e) => setNewShop(prev => ({ ...prev, contact: e.target.value }))}
                 />
@@ -180,18 +247,20 @@ export const SettleBox = () => {
                   placeholder="Commission rate (%)"
                   value={newShop.commission_rate}
                   onChange={(e) => setNewShop(prev => ({ ...prev, commission_rate: Number(e.target.value) }))}
+                  min="0"
+                  max="100"
                 />
                 <Input
-                  placeholder="WhatsApp link"
+                  placeholder="WhatsApp link (optional)"
                   value={newShop.whatsapp_link}
                   onChange={(e) => setNewShop(prev => ({ ...prev, whatsapp_link: e.target.value }))}
                 />
                 <Button 
-                  onClick={() => addPartnerShop.mutate(newShop)}
-                  disabled={!newShop.name || addPartnerShop.isPending}
+                  onClick={() => addShop.mutate(newShop)}
+                  disabled={!newShop.name || !newShop.contact || addShop.isPending}
                   className="w-full"
                 >
-                  Add Shop
+                  {addShop.isPending ? 'Adding...' : 'Add Partner Shop'}
                 </Button>
               </div>
             </DialogContent>
@@ -199,14 +268,17 @@ export const SettleBox = () => {
 
           <Dialog open={showAddItemDialog} onOpenChange={setShowAddItemDialog}>
             <DialogTrigger asChild>
-              <Button>
+              <Button variant="outline">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Item
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Household Item</DialogTitle>
+                <DialogTitle>Add New Item</DialogTitle>
+                <DialogDescription>
+                  Add a new household item to the catalog.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <select 
@@ -214,7 +286,7 @@ export const SettleBox = () => {
                   value={newItem.partner_shop_id}
                   onChange={(e) => setNewItem(prev => ({ ...prev, partner_shop_id: e.target.value }))}
                 >
-                  <option value="">Select partner shop</option>
+                  <option value="">Select Partner Shop</option>
                   {partnerShops?.map(shop => (
                     <option key={shop.id} value={shop.id}>{shop.name}</option>
                   ))}
@@ -227,8 +299,9 @@ export const SettleBox = () => {
                 <Input
                   type="number"
                   placeholder="Price (KES)"
-                  value={newItem.price}
+                  value={newItem.price || ''}
                   onChange={(e) => setNewItem(prev => ({ ...prev, price: Number(e.target.value) }))}
+                  min="0"
                 />
                 <select 
                   className="w-full p-2 border rounded-md"
@@ -236,15 +309,21 @@ export const SettleBox = () => {
                   onChange={(e) => setNewItem(prev => ({ ...prev, condition: e.target.value }))}
                 >
                   <option value="new">New</option>
-                  <option value="used">Used</option>
-                  <option value="refurbished">Refurbished</option>
+                  <option value="like_new">Like New</option>
+                  <option value="good">Good Condition</option>
+                  <option value="fair">Fair Condition</option>
                 </select>
+                <Input
+                  placeholder="Image URL (optional)"
+                  value={newItem.image_url}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, image_url: e.target.value }))}
+                />
                 <Button 
-                  onClick={() => addHouseholdItem.mutate(newItem)}
-                  disabled={!newItem.name || !newItem.partner_shop_id || addHouseholdItem.isPending}
+                  onClick={() => addItem.mutate(newItem)}
+                  disabled={!newItem.name || !newItem.price || !newItem.partner_shop_id || addItem.isPending}
                   className="w-full"
                 >
-                  Add Item
+                  {addItem.isPending ? 'Adding...' : 'Add Item'}
                 </Button>
               </div>
             </DialogContent>
@@ -253,13 +332,13 @@ export const SettleBox = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Shops</p>
-                <p className="text-3xl font-bold text-gray-900">{activeShops}</p>
+                <p className="text-sm font-medium text-gray-600">Total Shops</p>
+                <p className="text-3xl font-bold text-gray-900">{totalShops}</p>
               </div>
               <Store className="h-8 w-8 text-blue-600" />
             </div>
@@ -270,10 +349,10 @@ export const SettleBox = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Items</p>
-                <p className="text-3xl font-bold text-gray-900">{householdItems?.length || 0}</p>
+                <p className="text-sm font-medium text-gray-600">Active Shops</p>
+                <p className="text-3xl font-bold text-gray-900">{activeShops}</p>
               </div>
-              <Package className="h-8 w-8 text-green-600" />
+              <Store className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -282,10 +361,22 @@ export const SettleBox = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Avg Commission</p>
-                <p className="text-3xl font-bold text-gray-900">{(totalCommission / Math.max(activeShops, 1)).toFixed(1)}%</p>
+                <p className="text-sm font-medium text-gray-600">Total Items</p>
+                <p className="text-3xl font-bold text-gray-900">{totalItems}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-purple-600" />
+              <Package className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Available Items</p>
+                <p className="text-3xl font-bold text-gray-900">{availableItems}</p>
+              </div>
+              <Package className="h-8 w-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
@@ -298,7 +389,9 @@ export const SettleBox = () => {
         </CardHeader>
         <CardContent>
           {loadingShops ? (
-            <div className="text-center py-8">Loading shops...</div>
+            <div className="text-center py-8">Loading partner shops...</div>
+          ) : partnerShops?.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No partner shops added yet.</div>
           ) : (
             <Table>
               <TableHeader>
@@ -325,8 +418,16 @@ export const SettleBox = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-3 w-3" />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => toggleShopStatus.mutate({
+                            id: shop.id,
+                            active: !shop.active
+                          })}
+                          disabled={toggleShopStatus.isPending}
+                        >
+                          {shop.active ? 'Deactivate' : 'Activate'}
                         </Button>
                         {shop.whatsapp_link && (
                           <Button
@@ -334,9 +435,17 @@ export const SettleBox = () => {
                             variant="outline"
                             onClick={() => window.open(shop.whatsapp_link, '_blank')}
                           >
-                            <MessageSquare className="h-3 w-3" />
+                            <ExternalLink className="h-3 w-3" />
                           </Button>
                         )}
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => deleteShop.mutate(shop.id)}
+                          disabled={deleteShop.isPending}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -355,6 +464,8 @@ export const SettleBox = () => {
         <CardContent>
           {loadingItems ? (
             <div className="text-center py-8">Loading items...</div>
+          ) : householdItems?.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No items added yet.</div>
           ) : (
             <Table>
               <TableHeader>
@@ -370,34 +481,39 @@ export const SettleBox = () => {
               <TableBody>
                 {householdItems?.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        {item.image_url && (
+                          <img 
+                            src={item.image_url} 
+                            alt={item.name}
+                            className="w-10 h-10 rounded object-cover"
+                          />
+                        )}
+                        <div className="font-medium">{item.name}</div>
+                      </div>
+                    </TableCell>
                     <TableCell>{item.partner_shops?.name || 'Unknown'}</TableCell>
                     <TableCell>KES {item.price.toLocaleString()}</TableCell>
                     <TableCell>
-                      <Badge className={getConditionColor(item.condition)}>
-                        {item.condition}
+                      <Badge variant="outline">
+                        {item.condition.replace('_', ' ')}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant={item.available ? "default" : "secondary"}>
-                        {item.available ? 'Available' : 'Unavailable'}
+                        {item.available ? 'Available' : 'Sold'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        {item.partner_shops?.whatsapp_link && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => window.open(item.partner_shops.whatsapp_link, '_blank')}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => deleteItem.mutate(item.id)}
+                        disabled={deleteItem.isPending}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

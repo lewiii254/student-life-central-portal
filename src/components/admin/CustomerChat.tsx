@@ -16,6 +16,7 @@ import {
 import { 
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -27,7 +28,9 @@ import {
   Users,
   Star,
   TrendingUp,
-  Megaphone
+  Megaphone,
+  Eye,
+  CheckCircle
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +41,7 @@ export const CustomerChat = () => {
   const [response, setResponse] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [showBroadcastDialog, setShowBroadcastDialog] = useState(false);
+  const [showResponseDialog, setShowResponseDialog] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch customer inquiries
@@ -72,7 +76,12 @@ export const CustomerChat = () => {
       queryClient.invalidateQueries({ queryKey: ['customer-inquiries'] });
       setSelectedInquiry(null);
       setResponse('');
+      setShowResponseDialog(false);
       toast.success('Response sent successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to send response');
+      console.error('Error responding to inquiry:', error);
     }
   });
 
@@ -92,6 +101,10 @@ export const CustomerChat = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customer-inquiries'] });
       toast.success('Marked as read');
+    },
+    onError: (error) => {
+      toast.error('Failed to mark as read');
+      console.error('Error marking as read:', error);
     }
   });
 
@@ -118,11 +131,34 @@ export const CustomerChat = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  const useTemplate = (template: string) => {
+    setResponse(template);
+  };
+
   // Calculate stats
   const totalInquiries = inquiries?.length || 0;
   const unreadInquiries = inquiries?.filter(i => i.status === 'unread').length || 0;
   const respondedInquiries = inquiries?.filter(i => i.status === 'responded').length || 0;
   const responseRate = totalInquiries > 0 ? Math.round((respondedInquiries / totalInquiries) * 100) : 0;
+
+  const templates = [
+    {
+      title: 'Order Confirmation',
+      content: 'Thank you for your order! We\'ve received it and will process it shortly. You\'ll receive an SMS when it\'s ready for pickup.'
+    },
+    {
+      title: 'Delivery Update',
+      content: 'Your order is ready for pickup/delivery. Please visit our location or wait for our delivery team.'
+    },
+    {
+      title: 'Stock Notification',
+      content: 'Great news! The item you inquired about is now back in stock. Order now to secure yours!'
+    },
+    {
+      title: 'Event Reminder',
+      content: 'Don\'t forget about our upcoming event! Limited spots remaining. Register now to secure your place.'
+    }
+  ];
 
   return (
     <div className="space-y-8">
@@ -138,6 +174,9 @@ export const CustomerChat = () => {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Send Broadcast Message</DialogTitle>
+              <DialogDescription>
+                This message will be sent to all customers via WhatsApp/SMS
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <Textarea
@@ -146,9 +185,6 @@ export const CustomerChat = () => {
                 onChange={(e) => setBroadcastMessage(e.target.value)}
                 rows={4}
               />
-              <div className="text-sm text-gray-600">
-                This message will be sent to all customers via WhatsApp/SMS
-              </div>
               <Button 
                 onClick={sendBroadcast}
                 disabled={!broadcastMessage}
@@ -221,6 +257,8 @@ export const CustomerChat = () => {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">Loading inquiries...</div>
+          ) : inquiries?.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No customer inquiries yet.</div>
           ) : (
             <Table>
               <TableHeader>
@@ -263,13 +301,18 @@ export const CustomerChat = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => markAsRead.mutate(inquiry.id)}
+                            disabled={markAsRead.isPending}
                           >
-                            Mark Read
+                            <Eye className="h-3 w-3 mr-1" />
+                            Read
                           </Button>
                         )}
-                        <Dialog>
+                        <Dialog open={showResponseDialog} onOpenChange={setShowResponseDialog}>
                           <DialogTrigger asChild>
-                            <Button size="sm">
+                            <Button 
+                              size="sm"
+                              onClick={() => setSelectedInquiry(inquiry.id)}
+                            >
                               <Reply className="h-3 w-3 mr-1" />
                               Respond
                             </Button>
@@ -277,6 +320,9 @@ export const CustomerChat = () => {
                           <DialogContent className="max-w-2xl">
                             <DialogHeader>
                               <DialogTitle>Respond to {inquiry.customer_name}</DialogTitle>
+                              <DialogDescription>
+                                Send a response to this customer inquiry.
+                              </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4">
                               <div className="bg-gray-50 p-4 rounded-lg">
@@ -292,16 +338,20 @@ export const CustomerChat = () => {
                               <div className="flex space-x-2">
                                 <Button
                                   onClick={() => {
-                                    respondToInquiry.mutate({ id: inquiry.id, response });
+                                    if (selectedInquiry) {
+                                      respondToInquiry.mutate({ id: selectedInquiry, response });
+                                    }
                                   }}
-                                  disabled={!response}
+                                  disabled={!response || respondToInquiry.isPending}
                                 >
-                                  Save Response
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  {respondToInquiry.isPending ? 'Sending...' : 'Save Response'}
                                 </Button>
                                 <Button
                                   variant="outline"
                                   onClick={() => sendWhatsAppResponse(inquiry)}
                                 >
+                                  <MessageSquare className="h-4 w-4 mr-2" />
                                   Send via WhatsApp
                                 </Button>
                               </div>
@@ -325,26 +375,19 @@ export const CustomerChat = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Order Confirmation</h4>
-              <p className="text-sm text-gray-600 mb-3">Thank you for your order! We've received it and will process it shortly.</p>
-              <Button size="sm" variant="outline">Use Template</Button>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Delivery Update</h4>
-              <p className="text-sm text-gray-600 mb-3">Your order is ready for pickup/delivery. Please visit our location or wait for our delivery team.</p>
-              <Button size="sm" variant="outline">Use Template</Button>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Stock Notification</h4>
-              <p className="text-sm text-gray-600 mb-3">Great news! The item you inquired about is now back in stock. Order now to secure yours!</p>
-              <Button size="sm" variant="outline">Use Template</Button>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Event Reminder</h4>
-              <p className="text-sm text-gray-600 mb-3">Don't forget about our upcoming event! Limited spots remaining. Register now.</p>
-              <Button size="sm" variant="outline">Use Template</Button>
-            </div>
+            {templates.map((template, index) => (
+              <div key={index} className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">{template.title}</h4>
+                <p className="text-sm text-gray-600 mb-3">{template.content}</p>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => useTemplate(template.content)}
+                >
+                  Use Template
+                </Button>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

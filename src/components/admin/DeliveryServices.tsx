@@ -13,22 +13,30 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { 
   Truck, 
-  User, 
-  MapPin, 
   Clock,
+  CheckCircle,
+  MapPin,
+  User,
+  Phone,
+  Package,
   DollarSign,
-  TrendingUp,
-  Package
+  TrendingUp
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const DeliveryServices = () => {
-  const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
-  const [riderName, setRiderName] = useState('');
-  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [selectedService, setSelectedService] = useState('all');
   const queryClient = useQueryClient();
 
   // Fetch delivery requests
@@ -45,31 +53,50 @@ export const DeliveryServices = () => {
     }
   });
 
-  // Update delivery request
-  const updateDeliveryRequest = useMutation({
-    mutationFn: async ({ id, status, assigned_rider, delivery_fee }: { 
-      id: string, 
-      status: string, 
-      assigned_rider?: string,
-      delivery_fee?: number 
-    }) => {
-      const updateData: any = { status, updated_at: new Date().toISOString() };
-      if (assigned_rider) updateData.assigned_rider = assigned_rider;
-      if (delivery_fee !== undefined) updateData.delivery_fee = delivery_fee;
-
+  // Update delivery status
+  const updateDeliveryStatus = useMutation({
+    mutationFn: async ({ id, status, assigned_rider }: { id: string, status: string, assigned_rider?: string }) => {
       const { error } = await supabase
         .from('delivery_requests')
-        .update(updateData)
+        .update({ 
+          status, 
+          assigned_rider, 
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', id);
       
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery-requests'] });
-      setSelectedRequest(null);
-      setRiderName('');
-      setDeliveryFee(0);
-      toast.success('Delivery request updated successfully');
+      toast.success('Delivery status updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update delivery status');
+      console.error('Error updating delivery:', error);
+    }
+  });
+
+  // Update delivery fee
+  const updateDeliveryFee = useMutation({
+    mutationFn: async ({ id, fee }: { id: string, fee: number }) => {
+      const { error } = await supabase
+        .from('delivery_requests')
+        .update({ 
+          delivery_fee: fee,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['delivery-requests'] });
+      toast.success('Delivery fee updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update delivery fee');
+      console.error('Error updating fee:', error);
     }
   });
 
@@ -77,23 +104,22 @@ export const DeliveryServices = () => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'assigned': return 'bg-blue-100 text-blue-800';
-      case 'picked': return 'bg-purple-100 text-purple-800';
+      case 'picked_up': return 'bg-purple-100 text-purple-800';
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getServiceIcon = (serviceType: string) => {
-    switch (serviceType.toLowerCase()) {
-      case 'laundry': return '👕';
-      case 'gas': return '🔥';
-      case 'water': return '💧';
-      case 'food': return '🍕';
-      case 'grocery': return '🛒';
-      default: return '📦';
-    }
-  };
+  const serviceTypes = [
+    'Laundry',
+    'Gas Delivery',
+    'Water Delivery', 
+    'Food Delivery',
+    'Package Delivery',
+    'Shopping',
+    'Other'
+  ];
 
   // Calculate stats
   const totalRequests = deliveryRequests?.length || 0;
@@ -111,31 +137,15 @@ export const DeliveryServices = () => {
     return acc;
   }, {}) || {};
 
-  const assignRider = (requestId: string) => {
-    if (!riderName) {
-      toast.error('Please enter rider name');
-      return;
-    }
-    updateDeliveryRequest.mutate({
-      id: requestId,
-      status: 'assigned',
-      assigned_rider: riderName,
-      delivery_fee: deliveryFee
-    });
-  };
+  // Filter requests based on selected service
+  const filteredRequests = selectedService === 'all' 
+    ? deliveryRequests 
+    : deliveryRequests?.filter(r => r.service_type === selectedService);
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold text-gray-900">Delivery Services</h2>
-        <div className="flex items-center space-x-4">
-          <Badge variant="outline" className="px-3 py-1">
-            {pendingRequests} Pending
-          </Badge>
-          <Badge variant="outline" className="px-3 py-1">
-            KES {totalEarnings.toLocaleString()} Earned
-          </Badge>
-        </div>
       </div>
 
       {/* Stats Cards */}
@@ -171,7 +181,7 @@ export const DeliveryServices = () => {
                 <p className="text-sm font-medium text-gray-600">Completed</p>
                 <p className="text-3xl font-bold text-gray-900">{completedRequests}</p>
               </div>
-              <Truck className="h-8 w-8 text-green-600" />
+              <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -180,7 +190,7 @@ export const DeliveryServices = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Earnings</p>
+                <p className="text-sm font-medium text-gray-600">Total Earnings</p>
                 <p className="text-3xl font-bold text-gray-900">KES {totalEarnings.toLocaleString()}</p>
               </div>
               <DollarSign className="h-8 w-8 text-purple-600" />
@@ -189,19 +199,38 @@ export const DeliveryServices = () => {
         </Card>
       </div>
 
-      {/* Service Types Overview */}
+      {/* Service Type Filter */}
       <Card>
         <CardHeader>
-          <CardTitle>Service Types</CardTitle>
+          <CardTitle>Service Statistics</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {Object.entries(serviceStats).map(([service, count]) => (
               <div key={service} className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl mb-2">{getServiceIcon(service)}</div>
-                <div className="font-semibold capitalize">{service}</div>
-                <div className="text-sm text-gray-600">{count} requests</div>
+                <div className="text-2xl font-bold text-gray-900">{count}</div>
+                <div className="text-sm text-gray-600">{service}</div>
               </div>
+            ))}
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={selectedService === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedService('all')}
+            >
+              All Services
+            </Button>
+            {serviceTypes.map(service => (
+              <Button
+                key={service}
+                variant={selectedService === service ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedService(service)}
+              >
+                {service}
+              </Button>
             ))}
           </div>
         </CardContent>
@@ -210,33 +239,35 @@ export const DeliveryServices = () => {
       {/* Delivery Requests */}
       <Card>
         <CardHeader>
-          <CardTitle>Delivery Requests</CardTitle>
+          <CardTitle>
+            Delivery Requests 
+            {selectedService !== 'all' && ` - ${selectedService}`}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">Loading delivery requests...</div>
+          ) : !filteredRequests?.length ? (
+            <div className="text-center py-8 text-gray-500">
+              No {selectedService !== 'all' ? selectedService.toLowerCase() : ''} delivery requests yet.
+            </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Service</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Addresses</TableHead>
+                  <TableHead>Service Type</TableHead>
+                  <TableHead>Pickup</TableHead>
+                  <TableHead>Delivery</TableHead>
+                  <TableHead>Fee</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Rider</TableHead>
-                  <TableHead>Fee</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {deliveryRequests?.map((request) => (
+                {filteredRequests?.map((request) => (
                   <TableRow key={request.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg">{getServiceIcon(request.service_type)}</span>
-                        <span className="capitalize font-medium">{request.service_type}</span>
-                      </div>
-                    </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">{request.customer_name}</div>
@@ -244,81 +275,91 @@ export const DeliveryServices = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        <div><strong>From:</strong> {request.pickup_address || 'Not specified'}</div>
-                        <div><strong>To:</strong> {request.delivery_address || 'Not specified'}</div>
-                      </div>
+                      <Badge variant="outline">{request.service_type}</Badge>
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {request.pickup_address || 'Not specified'}
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {request.delivery_address || 'Not specified'}
+                    </TableCell>
+                    <TableCell>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            KES {request.delivery_fee || 0}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-sm">
+                          <DialogHeader>
+                            <DialogTitle>Update Delivery Fee</DialogTitle>
+                            <DialogDescription>
+                              Set the delivery fee for this request.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <Input
+                              type="number"
+                              placeholder="Delivery fee (KES)"
+                              defaultValue={request.delivery_fee || ''}
+                              onBlur={(e) => {
+                                const fee = Number(e.target.value);
+                                if (fee !== request.delivery_fee) {
+                                  updateDeliveryFee.mutate({ id: request.id, fee });
+                                }
+                              }}
+                              min="0"
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(request.status)}>
-                        {request.status}
+                        {request.status.replace('_', ' ')}
                       </Badge>
                     </TableCell>
                     <TableCell>{request.assigned_rider || 'Unassigned'}</TableCell>
-                    <TableCell>KES {request.delivery_fee || 0}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         {request.status === 'pending' && (
-                          <div className="flex space-x-2">
-                            {selectedRequest === request.id ? (
-                              <div className="flex space-x-1">
-                                <Input
-                                  placeholder="Rider name"
-                                  value={riderName}
-                                  onChange={(e) => setRiderName(e.target.value)}
-                                  className="w-24 h-8"
-                                />
-                                <Input
-                                  type="number"
-                                  placeholder="Fee"
-                                  value={deliveryFee}
-                                  onChange={(e) => setDeliveryFee(Number(e.target.value))}
-                                  className="w-20 h-8"
-                                />
-                                <Button
-                                  size="sm"
-                                  onClick={() => assignRider(request.id)}
-                                >
-                                  Assign
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setSelectedRequest(null)}
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                size="sm"
-                                onClick={() => setSelectedRequest(request.id)}
-                              >
-                                Assign Rider
-                              </Button>
-                            )}
-                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => updateDeliveryStatus.mutate({
+                              id: request.id,
+                              status: 'assigned',
+                              assigned_rider: 'Admin'
+                            })}
+                            disabled={updateDeliveryStatus.isPending}
+                          >
+                            <User className="h-3 w-3 mr-1" />
+                            Assign
+                          </Button>
                         )}
                         {request.status === 'assigned' && (
                           <Button
                             size="sm"
-                            onClick={() => updateDeliveryRequest.mutate({
+                            onClick={() => updateDeliveryStatus.mutate({
                               id: request.id,
-                              status: 'picked'
+                              status: 'picked_up'
                             })}
+                            disabled={updateDeliveryStatus.isPending}
                           >
-                            Mark Picked
+                            <Package className="h-3 w-3 mr-1" />
+                            Picked
                           </Button>
                         )}
-                        {request.status === 'picked' && (
+                        {request.status === 'picked_up' && (
                           <Button
                             size="sm"
-                            onClick={() => updateDeliveryRequest.mutate({
+                            onClick={() => updateDeliveryStatus.mutate({
                               id: request.id,
                               status: 'delivered'
                             })}
+                            disabled={updateDeliveryStatus.isPending}
                           >
-                            Mark Delivered
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Delivered
                           </Button>
                         )}
                       </div>
