@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { RentalAreaCard } from "@/components/rental/RentalAreaCard";
+import { SubAreaList } from "@/components/rental/SubAreaList";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -26,6 +27,7 @@ const formSchema = z.object({
 const RentalHelp = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -177,6 +179,37 @@ Please help me find a suitable room. Thank you!`
             </div>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // Show area details if an area is selected
+  if (selectedArea) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <Link to="/" className="flex items-center space-x-2 text-blue-600 hover:text-blue-700">
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Home</span>
+              </Link>
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-6 h-6 text-blue-500" />
+                <h1 className="text-2xl font-bold text-gray-900">Rental Help</h1>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="container mx-auto px-4 py-8">
+          <SubAreaList 
+            area={selectedArea}
+            subAreas={locations[selectedArea as keyof typeof locations] || []}
+            onBack={() => setSelectedArea(null)}
+          />
+        </div>
       </div>
     );
   }
@@ -448,28 +481,12 @@ Please help me find a suitable room. Thank you!`
           <h2 className="text-3xl font-bold text-center mb-8">Available Rental Areas</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Object.entries(locations).map(([area, subAreas]) => (
-              <Card key={area} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center space-x-2">
-                    <MapPin className="w-5 h-5 text-blue-500" />
-                    <span>{area}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {subAreas.length > 0 ? (
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {subAreas.map((subArea) => (
-                        <li key={subArea} className="flex items-center space-x-2">
-                          <span className="w-1 h-1 bg-blue-500 rounded-full"></span>
-                          <span>{subArea}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-gray-500">Multiple options available</p>
-                  )}
-                </CardContent>
-              </Card>
+              <RentalAreaCard
+                key={area}
+                area={area}
+                subAreas={subAreas}
+                onClick={() => setSelectedArea(area)}
+              />
             ))}
           </div>
         </div>
