@@ -425,11 +425,11 @@ const Index = () => {
               <h3 className="font-semibold mb-4 text-lg">Quick Links</h3>
               <ul className="space-y-3 text-gray-300">
                 <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><a href="#" className="hover:text-white transition-colors">How It Works</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Safety Guidelines</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><Link to="/how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
+                <li><Link to="/safety-guidelines" className="hover:text-white transition-colors">Safety Guidelines</Link></li>
+                <li><Link to="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/help-center" className="hover:text-white transition-colors">Help Center</Link></li>
               </ul>
             </div>
             
@@ -443,7 +443,7 @@ const Index = () => {
                 </li>
                 <li className="flex items-center space-x-2">
                   <Phone className="h-4 w-4" />
-                  <span>+254 712 345 678</span>
+                  <span>+254 790 767 347</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <MapPin className="h-4 w-4" />

@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import AuthGuard from "@/components/AuthGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
 import RentalHelp from "./pages/RentalHelp";
 import StudyEssentials from "./pages/StudyEssentials";
 import HouseholdItems from "./pages/HouseholdItems";
@@ -15,6 +16,11 @@ import DeliveryServices from "./pages/DeliveryServices";
 import BicycleRentals from "./pages/BicycleRentals";
 import CampusEvents from "./pages/CampusEvents";
 import AboutUs from "./pages/AboutUs";
+import HowItWorks from "./pages/HowItWorks";
+import SafetyGuidelines from "./pages/SafetyGuidelines";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 
@@ -31,6 +37,16 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<AboutUs />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/safety-guidelines" element={<SafetyGuidelines />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/help-center" element={<HelpCenter />} />
+            <Route path="/profile" element={
+              <AuthGuard>
+                <Profile />
+              </AuthGuard>
+            } />
             <Route path="/rental-help" element={
               <AuthGuard>
                 <RentalHelp />
