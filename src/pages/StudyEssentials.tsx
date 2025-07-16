@@ -1,17 +1,18 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ShoppingCart, Star, Clock, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
 
 const StudyEssentials = () => {
-  const [cart, setCart] = useState<any[]>([]);
+  const { addToCart, getTotalItems } = useCart();
 
   const products = [
     {
-      id: 1,
+      id: "1",
       name: "Lab Coat - Standard White",
       price: 1200,
       image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=400",
@@ -20,7 +21,7 @@ const StudyEssentials = () => {
       inStock: true
     },
     {
-      id: 2,
+      id: "2",
       name: "Engineering Dust Coat",
       price: 800,
       image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
@@ -29,7 +30,7 @@ const StudyEssentials = () => {
       inStock: true
     },
     {
-      id: 3,
+      id: "3",
       name: "Safety Boots - Steel Toe",
       price: 2500,
       image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400",
@@ -38,7 +39,7 @@ const StudyEssentials = () => {
       inStock: true
     },
     {
-      id: 4,
+      id: "4",
       name: "Engineering Overalls",
       price: 1500,
       image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=400",
@@ -47,7 +48,7 @@ const StudyEssentials = () => {
       inStock: true
     },
     {
-      id: 5,
+      id: "5",
       name: "Complete Engineering Set",
       price: 3500,
       image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
@@ -56,7 +57,7 @@ const StudyEssentials = () => {
       inStock: true
     },
     {
-      id: 6,
+      id: "6",
       name: "Scientific Calculator - Casio FX-991ES",
       price: 1800,
       image: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400",
@@ -65,7 +66,7 @@ const StudyEssentials = () => {
       inStock: true
     },
     {
-      id: 7,
+      id: "7",
       name: "Engineering T-Ruler Set",
       price: 400,
       image: "https://images.unsplash.com/photo-1636622433525-127afdf3662d?w=400",
@@ -96,9 +97,18 @@ const StudyEssentials = () => {
     }
   ];
 
-  const addToCart = (product: any) => {
-    setCart([...cart, product]);
-    console.log("Added to cart:", product);
+  const handleAddToCart = (item: any, type: 'product' | 'combo') => {
+    const cartItem = {
+      id: item.id,
+      name: item.name,
+      price: type === 'combo' ? item.comboPrice : item.price,
+      image: item.image,
+      category: type === 'combo' ? 'Combo Deal' : item.category,
+      type
+    };
+    
+    addToCart(cartItem);
+    toast.success(`${item.name} added to cart!`);
   };
 
   return (
@@ -116,10 +126,17 @@ const StudyEssentials = () => {
               <h1 className="text-2xl font-bold text-gray-900">Nerdy Cart</h1>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Cart ({cart.length})
-              </Button>
+              <Link to="/cart">
+                <Button variant="outline" size="sm" className="relative">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Cart
+                  {getTotalItems() > 0 && (
+                    <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] h-5">
+                      {getTotalItems()}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -181,7 +198,7 @@ const StudyEssentials = () => {
                     </div>
                   </div>
                   <Button 
-                    onClick={() => addToCart(combo)}
+                    onClick={() => handleAddToCart(combo, 'combo')}
                     className="w-full bg-orange-500 hover:bg-orange-600"
                   >
                     Add Combo to Cart
@@ -231,7 +248,7 @@ const StudyEssentials = () => {
                     )}
                   </div>
                   <Button 
-                    onClick={() => addToCart(product)}
+                    onClick={() => handleAddToCart(product, 'product')}
                     disabled={!product.inStock}
                     className="w-full bg-green-500 hover:bg-green-600"
                   >
