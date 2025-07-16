@@ -25,36 +25,36 @@ export const SubAreaList = ({ area, subAreas, onBack }: SubAreaListProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-4 mb-6">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-4 sm:mb-6">
         <Button 
           variant="outline" 
           onClick={onBack}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 self-start h-10 sm:h-auto"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Areas</span>
         </Button>
-        <h2 className="text-2xl font-bold text-gray-900">{area} Sub-Areas</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{area} Sub-Areas</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {subAreas.length > 0 ? (
           subAreas.map((subArea, index) => (
             <Card 
               key={index}
-              className="hover:shadow-lg transition-all duration-300 cursor-pointer group hover:scale-105"
+              className="hover:shadow-lg transition-all duration-300 cursor-pointer group hover:scale-105 touch-manipulation"
               onClick={() => setSelectedSubArea(subArea)}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center space-x-2">
-                  <Home className="w-5 h-5 text-green-500" />
+              <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+                <CardTitle className="text-base sm:text-lg flex items-center space-x-2">
+                  <Home className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0" />
                   <span className="truncate">{subArea}</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 sm:p-6 pt-0">
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Available houses and rooms
                   </p>
                   <div className="flex items-center justify-between">
@@ -71,19 +71,19 @@ export const SubAreaList = ({ area, subAreas, onBack }: SubAreaListProps) => {
           ))
         ) : (
           <Card className="col-span-full">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <MapPin className="w-5 h-5 text-blue-500" />
+            <CardHeader className="p-3 sm:p-6">
+              <CardTitle className="flex items-center space-x-2 text-base sm:text-xl">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
                 <span>{area} - General Area</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
+            <CardContent className="p-3 sm:p-6 pt-0">
+              <p className="text-gray-600 mb-4 text-sm sm:text-base">
                 This area has multiple housing options available.
               </p>
               <Button 
                 onClick={() => setSelectedSubArea("General Area")}
-                className="w-full bg-blue-500 hover:bg-blue-600"
+                className="w-full bg-blue-500 hover:bg-blue-600 h-12 sm:h-auto"
               >
                 View Available Houses
               </Button>

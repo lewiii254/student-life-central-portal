@@ -113,23 +113,24 @@ const StudyEssentials = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
+      {/* Mobile-optimized Header */}
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-2 text-green-600 hover:text-green-700">
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Home</span>
+            <Link to="/" className="flex items-center space-x-1 sm:space-x-2 text-green-600 hover:text-green-700 min-w-0">
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <span className="text-sm sm:text-base truncate">Back</span>
             </Link>
-            <div className="flex items-center space-x-2">
-              <ShoppingCart className="w-6 h-6 text-green-500" />
-              <h1 className="text-2xl font-bold text-gray-900">Nerdy Cart</h1>
+            <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 hidden sm:block">Nerdy Cart</h1>
+              <h1 className="text-lg font-bold text-gray-900 sm:hidden">Cart</h1>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center">
               <Link to="/cart">
-                <Button variant="outline" size="sm" className="relative">
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Cart
+                <Button variant="outline" size="sm" className="relative px-2 sm:px-4">
+                  <ShoppingCart className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Cart</span>
                   {getTotalItems() > 0 && (
                     <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] h-5">
                       {getTotalItems()}
@@ -142,64 +143,64 @@ const StudyEssentials = () => {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        {/* Mobile-optimized Hero Section */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
             Nerdy Cart - Study Essentials
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
+          <p className="text-base sm:text-xl text-gray-600 max-w-2xl mx-auto mb-4 sm:mb-6 px-2">
             Get all your study essentials and lab equipment delivered fast. Quality guaranteed!
           </p>
           
-          {/* Key Benefits */}
-          <div className="flex flex-wrap justify-center gap-6 text-sm">
-            <div className="flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-full">
-              <Clock className="w-4 h-4" />
+          {/* Mobile-optimized Key Benefits */}
+          <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-6 text-xs sm:text-sm">
+            <div className="flex items-center justify-center space-x-2 bg-green-100 text-green-700 px-3 sm:px-4 py-2 rounded-full">
+              <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>48hr max delivery</span>
             </div>
-            <div className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full">
-              <Shield className="w-4 h-4" />
+            <div className="flex items-center justify-center space-x-2 bg-blue-100 text-blue-700 px-3 sm:px-4 py-2 rounded-full">
+              <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Refund guaranteed</span>
             </div>
-            <div className="flex items-center space-x-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full">
-              <Star className="w-4 h-4" />
+            <div className="flex items-center justify-center space-x-2 bg-purple-100 text-purple-700 px-3 sm:px-4 py-2 rounded-full">
+              <Star className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Quality products</span>
             </div>
           </div>
         </div>
 
-        {/* Combo Deals */}
-        <section className="mb-12">
-          <h2 className="text-3xl font-bold text-center mb-8 text-gray-900">
+        {/* Mobile-optimized Combo Deals */}
+        <section className="mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-gray-900">
             🔥 Combo Deals - Save More!
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {comboDeals.map((combo) => (
               <Card key={combo.id} className="border-2 border-orange-200 hover:border-orange-300 transition-colors">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-xl text-gray-900">{combo.name}</CardTitle>
-                      <CardDescription>
+                <CardHeader className="pb-3 sm:pb-2">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-2 sm:space-y-0">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg sm:text-xl text-gray-900 pr-2">{combo.name}</CardTitle>
+                      <CardDescription className="text-sm">
                         Includes: {combo.items.join(", ")}
                       </CardDescription>
                     </div>
-                    <Badge className="bg-orange-500 text-white">
+                    <Badge className="bg-orange-500 text-white self-start sm:self-auto flex-shrink-0">
                       Save KES {combo.savings}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <span className="text-gray-500 line-through">KES {combo.originalPrice}</span>
-                      <span className="text-2xl font-bold text-green-600 ml-2">KES {combo.comboPrice}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
+                    <div className="text-center sm:text-left">
+                      <span className="text-gray-500 line-through text-sm sm:text-base">KES {combo.originalPrice}</span>
+                      <span className="text-xl sm:text-2xl font-bold text-green-600 ml-2">KES {combo.comboPrice}</span>
                     </div>
                   </div>
                   <Button 
                     onClick={() => handleAddToCart(combo, 'combo')}
-                    className="w-full bg-orange-500 hover:bg-orange-600"
+                    className="w-full bg-orange-500 hover:bg-orange-600 h-12 sm:h-auto text-base sm:text-sm"
                   >
                     Add Combo to Cart
                   </Button>
@@ -209,12 +210,12 @@ const StudyEssentials = () => {
           </div>
         </section>
 
-        {/* Products Grid */}
+        {/* Mobile-optimized Products Grid */}
         <section>
-          <h2 className="text-3xl font-bold text-center mb-8 text-gray-900">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-gray-900">
             Individual Products
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
             {products.map((product) => (
               <Card key={product.id} className="hover:shadow-lg transition-shadow">
                 <div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
@@ -224,36 +225,36 @@ const StudyEssentials = () => {
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
                   />
                 </div>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
+                <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+                  <div className="flex items-center justify-between mb-1 sm:mb-0">
                     <Badge variant="secondary" className="text-xs">
                       {product.category}
                     </Badge>
                     <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm text-gray-600">{product.rating}</span>
+                      <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-xs sm:text-sm text-gray-600">{product.rating}</span>
                     </div>
                   </div>
-                  <CardTitle className="text-lg">{product.name}</CardTitle>
+                  <CardTitle className="text-sm sm:text-lg leading-tight">{product.name}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-2xl font-bold text-green-600">
+                <CardContent className="p-3 sm:p-6 pt-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 space-y-2 sm:space-y-0">
+                    <span className="text-lg sm:text-2xl font-bold text-green-600">
                       KES {product.price}
                     </span>
                     {product.inStock ? (
-                      <Badge className="bg-green-100 text-green-700">In Stock</Badge>
+                      <Badge className="bg-green-100 text-green-700 text-xs self-start sm:self-auto">In Stock</Badge>
                     ) : (
-                      <Badge variant="destructive">Out of Stock</Badge>
+                      <Badge variant="destructive" className="text-xs self-start sm:self-auto">Out of Stock</Badge>
                     )}
                   </div>
                   <Button 
                     onClick={() => handleAddToCart(product, 'product')}
                     disabled={!product.inStock}
-                    className="w-full bg-green-500 hover:bg-green-600"
+                    className="w-full bg-green-500 hover:bg-green-600 h-10 sm:h-auto text-sm"
                   >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Add to Cart
+                    <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="sm:inline">Add to Cart</span>
                   </Button>
                 </CardContent>
               </Card>
@@ -261,28 +262,28 @@ const StudyEssentials = () => {
           </div>
         </section>
 
-        {/* Pickup Information */}
-        <section className="mt-16 bg-blue-50 rounded-lg p-8">
+        {/* Mobile-optimized Pickup Information */}
+        <section className="mt-12 sm:mt-16 bg-blue-50 rounded-lg p-4 sm:p-8">
           <div className="text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
               📍 Pickup Station Information
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-4 text-sm sm:text-base">
               All orders will be processed within 48 hours. We'll notify you via SMS when your order is ready for pickup.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="bg-white p-4 rounded-lg">
-                <h4 className="font-semibold text-gray-900">Main Pickup Station</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
+              <div className="bg-white p-3 sm:p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-1">Main Pickup Station</h4>
                 <p className="text-gray-600">Near Campus Main Gate</p>
                 <p className="text-gray-600">Open: 8AM - 6PM</p>
               </div>
-              <div className="bg-white p-4 rounded-lg">
-                <h4 className="font-semibold text-gray-900">Notification System</h4>
+              <div className="bg-white p-3 sm:p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-1">Notification System</h4>
                 <p className="text-gray-600">SMS alerts when ready</p>
                 <p className="text-gray-600">WhatsApp updates available</p>
               </div>
-              <div className="bg-white p-4 rounded-lg">
-                <h4 className="font-semibold text-gray-900">Payment Options</h4>
+              <div className="bg-white p-3 sm:p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-900 mb-1">Payment Options</h4>
                 <p className="text-gray-600">M-Pesa integration</p>
                 <p className="text-gray-600">Cash on pickup</p>
               </div>

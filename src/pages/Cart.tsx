@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -83,22 +84,22 @@ Please confirm this order and let me know when it will be ready for pickup. Than
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
-        <header className="bg-white shadow-sm border-b">
-          <div className="container mx-auto px-4 py-4">
+        <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+          <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
             <Link to="/study-essentials" className="flex items-center space-x-2 text-green-600 hover:text-green-700">
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Shop</span>
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-sm sm:text-base">Back to Shop</span>
             </Link>
           </div>
         </header>
 
-        <div className="container mx-auto px-4 py-16">
+        <div className="container mx-auto px-4 py-8 sm:py-16">
           <div className="text-center">
-            <ShoppingCart className="w-24 h-24 text-gray-300 mx-auto mb-6" />
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Your Cart is Empty</h1>
-            <p className="text-gray-600 mb-8">Add some products to get started!</p>
+            <ShoppingCart className="w-16 h-16 sm:w-24 sm:h-24 text-gray-300 mx-auto mb-4 sm:mb-6" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Your Cart is Empty</h1>
+            <p className="text-gray-600 mb-6 sm:mb-8">Add some products to get started!</p>
             <Link to="/study-essentials">
-              <Button className="bg-green-500 hover:bg-green-600">
+              <Button className="bg-green-500 hover:bg-green-600 h-12 px-6">
                 Continue Shopping
               </Button>
             </Link>
@@ -110,42 +111,42 @@ Please confirm this order and let me know when it will be ready for pickup. Than
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <Link to="/study-essentials" className="flex items-center space-x-2 text-green-600 hover:text-green-700">
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Shop</span>
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-sm sm:text-base">Back to Shop</span>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
-            <div></div>
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900">Shopping Cart</h1>
+            <div className="w-20 sm:w-24"></div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+          {/* Mobile-optimized Cart Items */}
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  Cart Items ({items.length})
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+                  <span>Cart Items ({items.length})</span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={clearCart}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 self-start sm:self-auto"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Clear Cart
                   </Button>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-6">
                 {items.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <div key={item.id} className="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 border rounded-lg">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
                       {item.image ? (
                         <img 
                           src={item.image} 
@@ -153,49 +154,54 @@ Please confirm this order and let me know when it will be ready for pickup. Than
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (
-                        <ShoppingCart className="w-8 h-8 text-gray-400" />
+                        <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
                       )}
                     </div>
                     
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-gray-500">{item.category}</p>
-                      <p className="text-lg font-bold text-green-600">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight">{item.name}</h3>
+                      <p className="text-xs sm:text-sm text-gray-500 mb-1">{item.category}</p>
+                      <p className="text-base sm:text-lg font-bold text-green-600">
                         KES {item.price.toLocaleString()}
                       </p>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                      >
-                        <Minus className="w-3 h-3" />
-                      </Button>
-                      <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                      >
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="font-bold text-gray-900">
-                        KES {(item.price * item.quantity).toLocaleString()}
-                      </p>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-red-600 hover:text-red-700 mt-1"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                      
+                      {/* Mobile quantity controls */}
+                      <div className="flex items-center justify-between mt-3 sm:mt-2">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                            disabled={item.quantity <= 1}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="w-8 text-center font-semibold text-sm">{item.quantity}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        
+                        <div className="text-right">
+                          <p className="font-bold text-gray-900 text-sm sm:text-base">
+                            KES {(item.price * item.quantity).toLocaleString()}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-red-600 hover:text-red-700 mt-1 h-6 px-1"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -203,13 +209,13 @@ Please confirm this order and let me know when it will be ready for pickup. Than
             </Card>
           </div>
 
-          {/* Checkout Form */}
+          {/* Mobile-optimized Checkout Form */}
           <div className="lg:col-span-1">
-            <Card>
+            <Card className="sticky top-20">
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Order Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-3 sm:p-6">
                 {/* Order Total */}
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center text-lg font-bold">
@@ -218,67 +224,71 @@ Please confirm this order and let me know when it will be ready for pickup. Than
                   </div>
                 </div>
 
-                {/* Customer Information Form */}
+                {/* Mobile-optimized Customer Information Form */}
                 <div className="space-y-4 border-t pt-4">
                   <h3 className="font-semibold text-gray-900">Customer Information</h3>
                   
                   <div>
-                    <Label htmlFor="name">Full Name *</Label>
+                    <Label htmlFor="name" className="text-sm">Full Name *</Label>
                     <Input
                       id="name"
                       value={customerInfo.name}
                       onChange={(e) => handleCustomerInfoChange('name', e.target.value)}
                       placeholder="Enter your full name"
                       required
+                      className="mt-1 h-12 sm:h-10"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Label htmlFor="phone" className="text-sm">Phone Number *</Label>
                     <Input
                       id="phone"
                       value={customerInfo.phone}
                       onChange={(e) => handleCustomerInfoChange('phone', e.target.value)}
                       placeholder="e.g., +254700000000"
                       required
+                      className="mt-1 h-12 sm:h-10"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="pickup">Preferred Pickup Location</Label>
+                    <Label htmlFor="pickup" className="text-sm">Preferred Pickup Location</Label>
                     <Input
                       id="pickup"
                       value={customerInfo.pickupLocation}
                       onChange={(e) => handleCustomerInfoChange('pickupLocation', e.target.value)}
                       placeholder="e.g., Main Gate, Library"
+                      className="mt-1 h-12 sm:h-10"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="notes">Additional Notes</Label>
+                    <Label htmlFor="notes" className="text-sm">Additional Notes</Label>
                     <Textarea
                       id="notes"
                       value={customerInfo.notes}
                       onChange={(e) => handleCustomerInfoChange('notes', e.target.value)}
                       placeholder="Any special instructions..."
                       rows={3}
+                      className="mt-1"
                     />
                   </div>
                 </div>
 
-                {/* Checkout Button */}
+                {/* Mobile-optimized Checkout Button */}
                 <Button
                   onClick={proceedToWhatsApp}
                   disabled={!isFormValid}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white h-12 sm:h-11 text-base sm:text-sm"
                   size="lg"
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Order via WhatsApp
                 </Button>
 
-                <div className="text-center text-sm text-gray-500">
-                  <Phone className="w-4 h-4 inline mr-1" />
+                <div className="text-center text-xs sm:text-sm text-gray-500">
+                  <Phone className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                   We'll contact you within 1 hour to confirm your order
                 </div>
               </CardContent>
