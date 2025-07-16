@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -72,7 +71,7 @@ ${customerInfo.notes ? `📝 *Additional Notes:*\n${customerInfo.notes}` : ''}
 
 Please confirm this order and let me know when it will be ready for pickup. Thank you!`;
 
-    const whatsappUrl = `https://wa.me/254700000000?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/254790767347?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
     
     // Clear cart after successful order
