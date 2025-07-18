@@ -318,6 +318,63 @@ export type Database = {
           },
         ]
       }
+      houses: {
+        Row: {
+          available: boolean | null
+          bathrooms: number | null
+          bedrooms: number | null
+          created_at: string | null
+          description: string | null
+          features: string[] | null
+          id: string
+          image_urls: string[] | null
+          landlord_contact: string
+          landlord_name: string
+          landlord_whatsapp: string | null
+          location: string
+          price: number
+          sub_area: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          available?: boolean | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          image_urls?: string[] | null
+          landlord_contact: string
+          landlord_name: string
+          landlord_whatsapp?: string | null
+          location: string
+          price: number
+          sub_area?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          available?: boolean | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          image_urls?: string[] | null
+          landlord_contact?: string
+          landlord_name?: string
+          landlord_whatsapp?: string | null
+          location?: string
+          price?: number
+          sub_area?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
