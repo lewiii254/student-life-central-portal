@@ -49,6 +49,31 @@ const Index = () => {
     }
   };
 
+  const handleSearch = () => {
+    if (searchQuery.trim() === '') return;
+    
+    const query = searchQuery.toLowerCase();
+    
+    // Check if search matches any service
+    const matchedService = services.find(service => 
+      service.title.toLowerCase().includes(query) ||
+      service.description.toLowerCase().includes(query)
+    );
+    
+    if (matchedService) {
+      handleServiceClick(matchedService.link);
+    } else {
+      // If no direct match, navigate to study essentials as default search
+      handleServiceClick('/study-essentials');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const services = [
     {
       title: 'Rental Help',
@@ -225,10 +250,14 @@ const Index = () => {
                   placeholder="Search for services, products, or events..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   className="pl-12 h-14 text-black bg-white/95 backdrop-blur-sm border-0 shadow-lg text-lg"
                 />
               </div>
-              <Button className="h-14 px-8 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black hover:from-yellow-500 hover:to-yellow-600 font-semibold text-lg shadow-lg">
+              <Button 
+                onClick={handleSearch}
+                className="h-14 px-8 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black hover:from-yellow-500 hover:to-yellow-600 font-semibold text-lg shadow-lg"
+              >
                 Search
               </Button>
             </div>

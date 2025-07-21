@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 import { 
   User, 
   Bell, 
@@ -21,7 +22,9 @@ import {
   Camera,
   MapPin,
   GraduationCap,
-  Phone
+  Phone,
+  ArrowLeft,
+  Home
 } from 'lucide-react';
 
 const Settings = () => {
@@ -94,6 +97,14 @@ const Settings = () => {
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <Link to="/">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Home className="w-4 h-4" />
+                Back to Home
+              </Button>
+            </Link>
+          </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
             Settings ⚙️
           </h1>
