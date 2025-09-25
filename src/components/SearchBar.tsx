@@ -81,6 +81,16 @@ export const SearchBar = () => {
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    
+    // Show suggestions when user starts typing
+    if (value.length > 0) {
+      setShowSuggestions(true);
+    }
+  };
+
   const selectTrending = (term: string) => {
     setQuery(term);
     setShowSuggestions(false);
@@ -94,7 +104,7 @@ export const SearchBar = () => {
         <Input
           placeholder="Search for anything on campus..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={handleInputChange}
           onKeyPress={handleKeyPress}
           onFocus={() => setShowSuggestions(true)}
           className="pl-12 pr-20 h-14 text-lg bg-white/95 backdrop-blur-sm border-2 border-gray-200 focus:border-purple-400 shadow-lg rounded-xl"
