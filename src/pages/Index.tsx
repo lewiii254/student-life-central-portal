@@ -6,6 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import UserMenu from '@/components/UserMenu';
 import { useAuth } from '@/hooks/useAuth';
+import { NotificationCenter } from '@/components/NotificationCenter';
+import { QuickActions } from '@/components/QuickActions';
+import { SearchBar } from '@/components/SearchBar';
+import { LiveActivityFeed } from '@/components/LiveActivityFeed';
 import { 
   GraduationCap, 
   Home, 
@@ -205,6 +209,11 @@ const Index = () => {
               <Link to="/about" className="text-gray-600 hover:text-purple-600 transition-colors font-medium">
                 About
               </Link>
+              {user && (
+                <Link to="/dashboard" className="text-gray-600 hover:text-purple-600 transition-colors font-medium">
+                  Dashboard
+                </Link>
+              )}
               {!user && (
                 <Link to="/auth" className="text-gray-600 hover:text-purple-600 transition-colors font-medium">
                   Sign In
@@ -212,7 +221,10 @@ const Index = () => {
               )}
             </nav>
 
-            {user && <UserMenu />}
+            <div className="flex items-center space-x-2">
+              {user && <NotificationCenter />}
+              {user && <UserMenu />}
+            </div>
           </div>
         </div>
       </header>
@@ -243,23 +255,8 @@ const Index = () => {
             </p>
             
             {/* Search Bar */}
-            <div className="max-w-2xl mx-auto flex gap-4 mt-8">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <Input
-                  placeholder="Search for services, products, or events..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="pl-12 h-14 text-black bg-white/95 backdrop-blur-sm border-0 shadow-lg text-lg"
-                />
-              </div>
-              <Button 
-                onClick={handleSearch}
-                className="h-14 px-8 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black hover:from-yellow-500 hover:to-yellow-600 font-semibold text-lg shadow-lg"
-              >
-                Search
-              </Button>
+            <div className="mt-8">
+              <SearchBar />
             </div>
 
             {/* Quick Stats */}
@@ -396,6 +393,23 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Live Activity Feed */}
+      <section className="py-16 bg-gradient-to-br from-gray-50 to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Live Campus Activity 📡
+            </h2>
+            <p className="text-xl text-gray-600">
+              See what your fellow comrades are up to right now
+            </p>
+          </div>
+          <div className="max-w-2xl mx-auto">
+            <LiveActivityFeed />
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-purple-600 to-green-600 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -506,6 +520,9 @@ const Index = () => {
           </div>
         </div>
       </footer>
+      
+      {/* Floating Components */}
+      <QuickActions />
     </div>
   );
 };

@@ -35,12 +35,14 @@ import { BicycleRentals } from '@/components/admin/BicycleRentals';
 import { EventsAndAdverts } from '@/components/admin/EventsAndAdverts';
 import { CustomerChat } from '@/components/admin/CustomerChat';
 import { SiteSettings } from '@/components/admin/SiteSettings';
+import { Analytics } from '@/components/admin/Analytics';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'rental', label: 'Rental Management', icon: Home },
     { id: 'nerdy-cart', label: 'Nerdy Cart', icon: ShoppingCart },
     { id: 'settle-box', label: 'Settle Box', icon: Package },
@@ -104,6 +106,7 @@ const AdminDashboard = () => {
         {/* Main Content */}
         <main className="flex-1 p-8">
           {activeTab === 'dashboard' && <DashboardStats />}
+          {activeTab === 'analytics' && <Analytics />}
           {activeTab === 'rental' && <RentalManagement />}
           {activeTab === 'nerdy-cart' && <NerdyCart />}
           {activeTab === 'settle-box' && <SettleBox />}

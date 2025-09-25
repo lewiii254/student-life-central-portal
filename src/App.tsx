@@ -26,6 +26,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
+import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,11 @@ const App = () => (
               <Route path="/admin" element={
                 <AuthGuard>
                   <AdminDashboard />
+                </AuthGuard>
+              } />
+              <Route path="/dashboard" element={
+                <AuthGuard>
+                  <Dashboard />
                 </AuthGuard>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
