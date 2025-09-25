@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Database } from '@/integrations/supabase/types';
 import { 
   Table,
   TableBody,
@@ -35,6 +36,8 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+type CustomerInquiry = Database['public']['Tables']['customer_inquiries']['Row'];
 
 export const CustomerChat = () => {
   const [selectedInquiry, setSelectedInquiry] = useState<string | null>(null);
@@ -125,7 +128,7 @@ export const CustomerChat = () => {
     setShowBroadcastDialog(false);
   };
 
-  const sendWhatsAppResponse = (inquiry: any) => {
+  const sendWhatsAppResponse = (inquiry: CustomerInquiry) => {
     const message = response || 'Thank you for contacting Campus Connect! We\'ve received your inquiry and will get back to you soon.';
     const whatsappUrl = `https://wa.me/${inquiry.customer_contact.replace('+', '')}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
