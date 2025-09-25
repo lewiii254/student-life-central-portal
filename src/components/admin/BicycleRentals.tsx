@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Database } from '@/integrations/supabase/types';
 import { 
   Table,
   TableBody,
@@ -37,6 +38,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+type Bicycle = Database['public']['Tables']['bicycles']['Row'];
+type BicycleUpdate = Database['public']['Tables']['bicycles']['Update'];
+
 export const BicycleRentals = () => {
   const [newBicycle, setNewBicycle] = useState({
     name: '',
@@ -46,7 +50,7 @@ export const BicycleRentals = () => {
     status: 'available'
   });
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [editingBicycle, setEditingBicycle] = useState<any>(null);
+  const [editingBicycle, setEditingBicycle] = useState<Bicycle | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch bicycles
@@ -111,7 +115,7 @@ export const BicycleRentals = () => {
 
   // Update bicycle
   const updateBicycle = useMutation({
-    mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
+    mutationFn: async ({ id, updates }: { id: string, updates: BicycleUpdate }) => {
       const { error } = await supabase
         .from('bicycles')
         .update(updates)

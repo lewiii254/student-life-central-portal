@@ -209,6 +209,9 @@ const Index = () => {
               <Link to="/about" className="text-gray-600 hover:text-purple-600 transition-colors font-medium">
                 About
               </Link>
+              <Link to="/admin" className="text-gray-600 hover:text-purple-600 transition-colors font-medium">
+                Admin
+              </Link>
               {user && (
                 <Link to="/dashboard" className="text-gray-600 hover:text-purple-600 transition-colors font-medium">
                   Dashboard

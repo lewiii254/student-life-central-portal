@@ -1,6 +1,6 @@
 
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
@@ -10,7 +10,11 @@ interface AuthGuardProps {
 
 const AuthGuard = ({ children }: AuthGuardProps) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
+  // Demo mode: Allow access to admin dashboard for testing
+  const isDemoMode = location.pathname.startsWith('/admin');
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -22,7 +26,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     );
   }
 
-  if (!user) {
+  if (!user && !isDemoMode) {
     return <Navigate to="/auth" replace />;
   }
 

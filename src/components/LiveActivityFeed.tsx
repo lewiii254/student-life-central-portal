@@ -90,7 +90,7 @@ export const LiveActivityFeed = () => {
     const interval = setInterval(() => {
       const newActivity: ActivityItem = {
         id: Date.now().toString(),
-        type: ['order', 'rental', 'event', 'bicycle'][Math.floor(Math.random() * 4)] as any,
+        type: (['order', 'rental', 'event', 'bicycle'] as const)[Math.floor(Math.random() * 4)],
         user: ['Alex T.', 'Maria S.', 'David K.', 'Lucy W.'][Math.floor(Math.random() * 4)],
         action: 'just joined Campus Connect',
         timestamp: new Date(),
