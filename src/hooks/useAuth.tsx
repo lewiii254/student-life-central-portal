@@ -1,15 +1,24 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+interface UserMetadata {
+  full_name?: string;
+  avatar_url?: string;
+  student_id?: string;
+  course?: string;
+  year?: number;
+  [key: string]: unknown;
+}
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, userData?: UserMetadata) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -75,17 +84,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       return { error };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const authError = error as AuthError;
       toast({
         title: "Sign In Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      return { error };
+      return { error: authError };
     }
   };
 
-  const signUp = async (email: string, password: string, userData?: any) => {
+  const signUp = async (email: string, password: string, userData?: UserMetadata) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
@@ -112,13 +122,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       return { error };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const authError = error as AuthError;
       toast({
         title: "Sign Up Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      return { error };
+      return { error: authError };
     }
   };
 
@@ -137,7 +148,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           description: "You have successfully signed out.",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const authError = error as AuthError;
       toast({
         title: "Sign Out Error",
         description: "An unexpected error occurred. Please try again.",

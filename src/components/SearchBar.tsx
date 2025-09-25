@@ -33,18 +33,42 @@ export const SearchBar = () => {
     
     // Smart routing based on search terms
     if (searchTerm.includes('room') || searchTerm.includes('accommodation') || searchTerm.includes('rental')) {
-      user ? navigate('/rental-help') : navigate('/auth');
+      if (user) {
+        navigate('/rental-help');
+      } else {
+        navigate('/auth');
+      }
     } else if (searchTerm.includes('food') || searchTerm.includes('delivery') || searchTerm.includes('laundry')) {
-      user ? navigate('/delivery') : navigate('/auth');
+      if (user) {
+        navigate('/delivery');
+      } else {
+        navigate('/auth');
+      }
     } else if (searchTerm.includes('bike') || searchTerm.includes('bicycle')) {
-      user ? navigate('/bicycle-rentals') : navigate('/auth');
+      if (user) {
+        navigate('/bicycle-rentals');
+      } else {
+        navigate('/auth');
+      }
     } else if (searchTerm.includes('event') || searchTerm.includes('party') || searchTerm.includes('festival')) {
-      user ? navigate('/events') : navigate('/auth');
+      if (user) {
+        navigate('/events');
+      } else {
+        navigate('/auth');
+      }
     } else if (searchTerm.includes('furniture') || searchTerm.includes('household')) {
-      user ? navigate('/household-items') : navigate('/auth');
+      if (user) {
+        navigate('/household-items');
+      } else {
+        navigate('/auth');
+      }
     } else {
       // Default to study essentials
-      user ? navigate('/study-essentials') : navigate('/auth');
+      if (user) {
+        navigate('/study-essentials');
+      } else {
+        navigate('/auth');
+      }
     }
     
     setShowSuggestions(false);

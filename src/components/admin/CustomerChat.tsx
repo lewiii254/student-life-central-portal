@@ -131,7 +131,7 @@ export const CustomerChat = () => {
     window.open(whatsappUrl, '_blank');
   };
 
-  const useTemplate = (template: string) => {
+  const applyTemplate = (template: string) => {
     setResponse(template);
   };
 
@@ -382,7 +382,7 @@ export const CustomerChat = () => {
                 <Button 
                   size="sm" 
                   variant="outline"
-                  onClick={() => useTemplate(template.content)}
+                  onClick={() => applyTemplate(template.content)}
                 >
                   Use Template
                 </Button>
