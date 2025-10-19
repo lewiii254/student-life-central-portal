@@ -232,30 +232,38 @@ graph LR
 
 ```mermaid
 erDiagram
-    USERS ||--o{ ORDERS : places
-    USERS ||--o{ RENTAL_REQUESTS : makes
-    USERS ||--o{ BICYCLE_BOOKINGS : creates
-    USERS ||--o{ REFERRALS : refers
-    USERS ||--o{ ADMIN_USERS : "can be"
+    AUTH_USERS ||--o{ ADMIN_USERS : "can be"
+    AUTH_USERS ||--o{ PROFILES : has
+    AUTH_USERS ||--o{ REFERRALS : refers
     
-    PRODUCTS ||--o{ ORDER_ITEMS : contains
+    PRODUCTS }o--|| ORDERS : "included in"
     BICYCLES ||--o{ BICYCLE_BOOKINGS : "booked in"
     PARTNER_SHOPS ||--o{ HOUSEHOLD_ITEMS : supplies
     RENTAL_LOCATIONS ||--o{ HOUSES : "located in"
     
-    USERS {
+    AUTH_USERS {
         uuid id PK
         string email
+        string encrypted_password
+        timestamp created_at
+    }
+    
+    PROFILES {
+        uuid id PK
+        uuid user_id FK
         string full_name
+        string avatar_url
         timestamp created_at
     }
     
     ORDERS {
         uuid id PK
-        uuid user_id FK
+        string customer_name
+        string customer_contact
         jsonb items
         integer total_amount
         string status
+        string payment_status
         timestamp created_at
     }
     
@@ -270,7 +278,8 @@ erDiagram
     
     RENTAL_REQUESTS {
         uuid id PK
-        uuid user_id FK
+        string name
+        string contact
         string preferred_location
         integer budget
         string status
@@ -279,11 +288,13 @@ erDiagram
     
     HOUSES {
         uuid id PK
-        uuid location_id FK
         string title
         integer price
+        string location
+        string sub_area
         integer bedrooms
         string[] features
+        string landlord_contact
         boolean available
     }
     
@@ -298,10 +309,12 @@ erDiagram
     BICYCLE_BOOKINGS {
         uuid id PK
         uuid bicycle_id FK
-        uuid user_id FK
+        string customer_name
+        string customer_contact
         timestamp rental_start
         timestamp rental_end
         integer total_cost
+        string status
     }
     
     EVENTS {
@@ -327,6 +340,15 @@ erDiagram
         string name
         integer price
         string condition
+    }
+    
+    REFERRALS {
+        uuid id PK
+        uuid referrer_id FK
+        uuid referred_user_id FK
+        string referred_user_name
+        string status
+        decimal reward
     }
 ```
 

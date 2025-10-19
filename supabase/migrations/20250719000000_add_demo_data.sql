@@ -123,7 +123,7 @@ INSERT INTO public.bicycles (name, description, hourly_rate, daily_rate, image_u
 ('Speed Racer Elite', 'Lightweight racing bike for speed enthusiasts', 200, 1000, 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400', 'available'),
 ('Eco Commuter', 'Electric-assist bicycle for easy campus navigation', 250, 1200, 'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=400', 'available'),
 ('Campus Cruiser', 'Reliable bike for everyday student use', 80, 400, 'https://images.unsplash.com/photo-1511994714008-b6fa15bb8b8e?w=400', 'available'),
-('Lady''s Comfort Bike', 'Specially designed comfortable bike for female students', 120, 600, 'https://images.unsplash.com/photo-1559826257-403348325a59?w=400', 'available'),
+('Ladies Comfort Bike', 'Specially designed comfortable bike for female students', 120, 600, 'https://images.unsplash.com/photo-1559826257-403348325a59?w=400', 'available'),
 ('Folding Bike Compact', 'Space-saving folding bike, perfect for small apartments', 180, 900, 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400', 'available'),
 ('Student Special', 'Budget-friendly option for daily campus rides', 70, 350, 'https://images.unsplash.com/photo-1476362555312-ab9e108a0b7e?w=400', 'available'),
 ('Hybrid All-Terrain', 'Versatile bike suitable for both city and trail riding', 140, 700, 'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=400', 'available'),
