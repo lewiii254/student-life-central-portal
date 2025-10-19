@@ -83,6 +83,20 @@ export const StudentDashboard = () => {
       icon: Calendar,
       color: 'from-orange-500 to-red-500',
       action: () => navigate('/events')
+    },
+    {
+      title: 'Request Delivery',
+      description: 'Fast campus-wide delivery',
+      icon: Package,
+      color: 'from-yellow-500 to-orange-500',
+      action: () => navigate('/delivery')
+    },
+    {
+      title: 'Get Help',
+      description: '24/7 support available',
+      icon: MessageCircle,
+      color: 'from-pink-500 to-rose-500',
+      action: () => navigate('/help-center')
     }
   ];
 
@@ -153,7 +167,7 @@ export const StudentDashboard = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {quickActions.map((action) => {
               const Icon = action.icon;
               return (
