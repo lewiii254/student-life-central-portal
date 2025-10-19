@@ -31,6 +31,35 @@ Campus Connect is your **all-in-one digital companion** designed specifically fo
 
 ---
 
+## 🎯 Demo Data & Testing
+
+Campus Connect comes pre-loaded with **comprehensive demo data** to help you explore all features immediately! 🎉
+
+### 📦 What's Included?
+
+Our demo database includes:
+- **🏠 15 Houses** - Realistic rental listings across 10 locations
+- **📚 14 Study Products** - From calculators to notebooks
+- **🏪 5 Partner Shops** - With 20 household items
+- **🚲 12 Bicycles** - Various models for rent
+- **🎉 10 Events** - Upcoming campus activities
+- **📝 Sample Orders** - Example transactions
+- **🚚 Delivery Requests** - Active delivery examples
+- **👥 User Data** - Sample profiles and activities
+
+### 🚀 Getting Started with Demo Data
+
+When you first run the app, the demo data will be automatically loaded via database migrations! Just:
+
+1. **Start the app** - Demo data loads automatically
+2. **Explore features** - Browse products, houses, events
+3. **Test workflows** - Try booking, ordering, requesting
+4. **Admin dashboard** - View analytics with realistic data
+
+> 💡 **Tip**: The demo data provides a complete sandbox environment to test all features before going live!
+
+---
+
 ## 🚀 Quick Start Guide
 
 ### 📋 Prerequisites
@@ -89,6 +118,455 @@ Before you begin, ensure you have:
 - **🔍 ESLint** - Code linting
 - **💅 Prettier** - Code formatting
 - **🚀 Lovable** - AI-powered development
+
+---
+
+## 🏛️ System Architecture
+
+### High-Level Architecture
+
+```mermaid
+graph TB
+    subgraph Client["🖥️ Client Layer"]
+        Web[Web Browser]
+        Mobile[Mobile Browser]
+    end
+    
+    subgraph Frontend["⚛️ Frontend Application"]
+        React[React App]
+        Router[React Router]
+        Query[React Query]
+        UI[Shadcn UI]
+    end
+    
+    subgraph Backend["🔥 Backend Services - Supabase"]
+        Auth[Authentication]
+        DB[(PostgreSQL Database)]
+        Storage[File Storage]
+        Realtime[Real-time Engine]
+        API[REST API]
+    end
+    
+    subgraph External["🌐 External Services"]
+        WhatsApp[WhatsApp API]
+        Payment[M-Pesa Gateway]
+        Maps[Maps API]
+    end
+    
+    Web --> React
+    Mobile --> React
+    React --> Router
+    React --> Query
+    React --> UI
+    
+    Query --> API
+    Router --> Auth
+    React --> Auth
+    
+    API --> DB
+    Auth --> DB
+    Realtime --> DB
+    
+    React -.-> WhatsApp
+    React -.-> Payment
+    React -.-> Maps
+    
+    style Client fill:#e1f5ff
+    style Frontend fill:#fff4e1
+    style Backend fill:#e8f5e9
+    style External fill:#fce4ec
+```
+
+### Component Architecture
+
+```mermaid
+graph LR
+    subgraph Pages["📄 Pages"]
+        Index[Home Page]
+        Dashboard[User Dashboard]
+        Admin[Admin Dashboard]
+        Rental[Rental Help]
+        Shop[Shopping Pages]
+        Events[Events Page]
+    end
+    
+    subgraph Components["🧩 Shared Components"]
+        Nav[Navigation]
+        Auth[Auth Guard]
+        Search[Search Bar]
+        Cart[Shopping Cart]
+        Notif[Notifications]
+    end
+    
+    subgraph AdminComp["👨‍💼 Admin Components"]
+        Stats[Dashboard Stats]
+        Analytics[Analytics]
+        Manage[Management Panels]
+        Chat[Customer Chat]
+    end
+    
+    subgraph Services["⚙️ Services & Hooks"]
+        UseAuth[useAuth Hook]
+        Supabase[Supabase Client]
+        Context[Context Providers]
+    end
+    
+    Pages --> Components
+    Pages --> Services
+    Admin --> AdminComp
+    AdminComp --> Services
+    Components --> Services
+    Services --> Supabase
+    
+    style Pages fill:#bbdefb
+    style Components fill:#c8e6c9
+    style AdminComp fill:#ffccbc
+    style Services fill:#f8bbd0
+```
+
+---
+
+## 🗄️ Database Schema
+
+### Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    USERS ||--o{ ORDERS : places
+    USERS ||--o{ RENTAL_REQUESTS : makes
+    USERS ||--o{ BICYCLE_BOOKINGS : creates
+    USERS ||--o{ REFERRALS : refers
+    USERS ||--o{ ADMIN_USERS : "can be"
+    
+    PRODUCTS ||--o{ ORDER_ITEMS : contains
+    BICYCLES ||--o{ BICYCLE_BOOKINGS : "booked in"
+    PARTNER_SHOPS ||--o{ HOUSEHOLD_ITEMS : supplies
+    RENTAL_LOCATIONS ||--o{ HOUSES : "located in"
+    
+    USERS {
+        uuid id PK
+        string email
+        string full_name
+        timestamp created_at
+    }
+    
+    ORDERS {
+        uuid id PK
+        uuid user_id FK
+        jsonb items
+        integer total_amount
+        string status
+        timestamp created_at
+    }
+    
+    PRODUCTS {
+        uuid id PK
+        string name
+        integer price
+        integer stock_quantity
+        string category
+        boolean is_combo
+    }
+    
+    RENTAL_REQUESTS {
+        uuid id PK
+        uuid user_id FK
+        string preferred_location
+        integer budget
+        string status
+        string assigned_agent
+    }
+    
+    HOUSES {
+        uuid id PK
+        uuid location_id FK
+        string title
+        integer price
+        integer bedrooms
+        string[] features
+        boolean available
+    }
+    
+    BICYCLES {
+        uuid id PK
+        string name
+        integer hourly_rate
+        integer daily_rate
+        string status
+    }
+    
+    BICYCLE_BOOKINGS {
+        uuid id PK
+        uuid bicycle_id FK
+        uuid user_id FK
+        timestamp rental_start
+        timestamp rental_end
+        integer total_cost
+    }
+    
+    EVENTS {
+        uuid id PK
+        string title
+        timestamp event_date
+        integer ticket_price
+        integer max_attendees
+        string status
+    }
+    
+    PARTNER_SHOPS {
+        uuid id PK
+        string name
+        string location
+        decimal commission_rate
+        boolean active
+    }
+    
+    HOUSEHOLD_ITEMS {
+        uuid id PK
+        uuid partner_shop_id FK
+        string name
+        integer price
+        string condition
+    }
+```
+
+### Database Tables Overview
+
+```mermaid
+graph TB
+    subgraph Auth["👤 Authentication & Users"]
+        Users[users]
+        Profiles[profiles]
+        AdminUsers[admin_users]
+    end
+    
+    subgraph Rental["🏠 Rental System"]
+        RentalReq[rental_requests]
+        RentalLoc[rental_locations]
+        Houses[houses]
+        RentalSet[rental_settings]
+    end
+    
+    subgraph Ecommerce["🛒 E-Commerce"]
+        Products[products]
+        Orders[orders]
+        PartnerShops[partner_shops]
+        HouseholdItems[household_items]
+    end
+    
+    subgraph Delivery["🚚 Delivery & Transport"]
+        DeliveryReq[delivery_requests]
+        Bicycles[bicycles]
+        BicycleBook[bicycle_bookings]
+    end
+    
+    subgraph Events["🎉 Events & Marketing"]
+        EventsTable[events]
+        Ads[advertisements]
+    end
+    
+    subgraph Support["💬 Support"]
+        Inquiries[customer_inquiries]
+        Referrals[referrals]
+    end
+    
+    Users --> RentalReq
+    Users --> Orders
+    Users --> BicycleBook
+    Users --> Referrals
+    
+    RentalLoc --> Houses
+    PartnerShops --> HouseholdItems
+    Bicycles --> BicycleBook
+    
+    style Auth fill:#e3f2fd
+    style Rental fill:#f3e5f5
+    style Ecommerce fill:#e8f5e9
+    style Delivery fill:#fff3e0
+    style Events fill:#fce4ec
+    style Support fill:#f1f8e9
+```
+
+---
+
+## 🔄 User Flow Diagrams
+
+### Student Registration & Onboarding
+
+```mermaid
+sequenceDiagram
+    participant S as Student
+    participant W as Web App
+    participant A as Supabase Auth
+    participant D as Database
+    
+    S->>W: Visit Campus Connect
+    W->>S: Display Landing Page
+    S->>W: Click "Sign Up"
+    W->>S: Show Registration Form
+    S->>W: Enter Email & Password
+    W->>A: Create Account
+    A->>D: Store User Credentials
+    A->>W: Return User Token
+    W->>D: Create User Profile
+    D->>W: Profile Created
+    W->>S: Redirect to Dashboard
+    S->>W: View Welcome Tutorial
+    W->>S: Show Available Services
+```
+
+### Rental Request Flow
+
+```mermaid
+flowchart TD
+    Start([Student Searches for Housing]) --> Browse[Browse Rental Locations]
+    Browse --> Filter{Apply Filters?}
+    Filter -->|Yes| SetBudget[Set Budget & Preferences]
+    Filter -->|No| ViewHouses[View Available Houses]
+    SetBudget --> ViewHouses
+    
+    ViewHouses --> SelectHouse{Found Suitable House?}
+    SelectHouse -->|Yes| ContactLandlord[Contact via WhatsApp/Call]
+    SelectHouse -->|No| SubmitRequest[Submit Rental Request]
+    
+    SubmitRequest --> PayFee[Pay Search Fee KES 200]
+    PayFee --> AssignAgent[Admin Assigns Agent]
+    AssignAgent --> AgentContact[Agent Contacts Student]
+    AgentContact --> ViewOptions[Agent Shows Options]
+    ViewOptions --> Decision{Accept House?}
+    
+    Decision -->|Yes| Complete[Request Completed]
+    Decision -->|No| ViewOptions
+    
+    ContactLandlord --> Arrange[Arrange Viewing]
+    Arrange --> End([Process Complete])
+    Complete --> End
+    
+    style Start fill:#4caf50
+    style End fill:#2196f3
+    style PayFee fill:#ff9800
+    style Complete fill:#4caf50
+```
+
+### Shopping & Delivery Flow
+
+```mermaid
+flowchart LR
+    A[Browse Products] --> B{Product Type?}
+    B -->|Study Essentials| C[Nerdy Cart]
+    B -->|Household Items| D[Settle Box]
+    
+    C --> E[Add to Cart]
+    D --> E
+    
+    E --> F[Review Cart]
+    F --> G{Continue Shopping?}
+    G -->|Yes| A
+    G -->|No| H[Proceed to Checkout]
+    
+    H --> I[Enter Delivery Info]
+    I --> J[Choose Payment Method]
+    J --> K{Payment Method}
+    
+    K -->|M-Pesa| L[Enter Phone Number]
+    K -->|Cash| M[Cash on Delivery]
+    
+    L --> N[Confirm Payment]
+    M --> N
+    
+    N --> O[Order Confirmed]
+    O --> P[Admin Assigns Rider]
+    P --> Q[Delivery in Progress]
+    Q --> R[Order Delivered]
+    
+    style A fill:#e3f2fd
+    style E fill:#fff3e0
+    style O fill:#c8e6c9
+    style R fill:#4caf50
+```
+
+### Bicycle Rental Flow
+
+```mermaid
+stateDiagram-v2
+    [*] --> BrowseBikes: Student visits page
+    BrowseBikes --> SelectBike: Choose bicycle
+    SelectBike --> CheckAvailability: Check status
+    
+    CheckAvailability --> Available: Bike available
+    CheckAvailability --> Unavailable: Bike unavailable
+    
+    Unavailable --> BrowseBikes: Select another
+    
+    Available --> SelectDuration: Choose rental period
+    SelectDuration --> HourlyRate: Select hours
+    SelectDuration --> DailyRate: Select days
+    
+    HourlyRate --> CalculateCost: Calculate total
+    DailyRate --> CalculateCost
+    
+    CalculateCost --> EnterDetails: Provide contact info
+    EnterDetails --> ConfirmBooking: Submit booking
+    ConfirmBooking --> PaymentPending: Awaiting payment
+    
+    PaymentPending --> PaymentComplete: Payment confirmed
+    PaymentComplete --> BikeActive: Rental active
+    
+    BikeActive --> InUse: Student using bike
+    InUse --> ReturnBike: Return bicycle
+    ReturnBike --> BookingComplete: Booking completed
+    
+    BookingComplete --> [*]
+```
+
+### Admin Dashboard Workflow
+
+```mermaid
+flowchart TB
+    subgraph Login["🔐 Authentication"]
+        A1[Admin Login] --> A2{Valid Credentials?}
+        A2 -->|No| A1
+        A2 -->|Yes| A3[Access Dashboard]
+    end
+    
+    subgraph Dashboard["📊 Dashboard Overview"]
+        A3 --> D1[View Statistics]
+        D1 --> D2[Recent Activity]
+        D2 --> D3[Quick Actions]
+    end
+    
+    subgraph Management["⚙️ Management"]
+        D3 --> M1{Select Section}
+        M1 -->|Rentals| M2[Manage Properties]
+        M1 -->|Products| M3[Manage Inventory]
+        M1 -->|Deliveries| M4[Assign Riders]
+        M1 -->|Bicycles| M5[Fleet Management]
+        M1 -->|Events| M6[Event Planning]
+    end
+    
+    subgraph Actions["✏️ Actions"]
+        M2 --> A4[Assign Agents]
+        M3 --> A5[Update Stock]
+        M4 --> A6[Track Deliveries]
+        M5 --> A7[Maintenance Schedule]
+        M6 --> A8[Publish Events]
+    end
+    
+    subgraph Analytics["📈 Analytics"]
+        A4 --> AN1[Generate Reports]
+        A5 --> AN1
+        A6 --> AN1
+        A7 --> AN1
+        A8 --> AN1
+        AN1 --> AN2[View Insights]
+    end
+    
+    style Login fill:#e3f2fd
+    style Dashboard fill:#c8e6c9
+    style Management fill:#fff3e0
+    style Actions fill:#f3e5f5
+    style Analytics fill:#fce4ec
+```
 
 ---
 
