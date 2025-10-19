@@ -10,6 +10,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CalendarEvent {
   id: string;
@@ -22,43 +24,48 @@ interface CalendarEvent {
 }
 
 export const CalendarWidget = () => {
-  const [currentMonth] = useState('November 2025');
+  const [currentMonth] = useState(new Date().toLocaleString('default', { month: 'long', year: 'numeric' }));
   
-  const upcomingEvents: CalendarEvent[] = [
-    {
-      id: '1',
-      title: 'Software Engineering Exam',
-      date: 'Nov 25',
-      time: '2:00 PM - 5:00 PM',
-      location: 'Main Hall',
-      type: 'academic',
-    },
-    {
-      id: '2',
-      title: 'Tech Innovation Summit',
-      date: 'Nov 28',
-      time: '9:00 AM - 5:00 PM',
-      location: 'Conference Center',
-      type: 'event',
-      attendees: 250
-    },
-    {
-      id: '3',
-      title: 'Project Submission',
-      date: 'Nov 30',
-      time: '11:59 PM',
-      type: 'deadline',
-    },
-    {
-      id: '4',
-      title: 'Career Fair',
-      date: 'Dec 2',
-      time: '10:00 AM - 4:00 PM',
-      location: 'Student Center',
-      type: 'event',
-      attendees: 500
+  // Fetch real events from database
+  const { data: upcomingEvents = [], isLoading } = useQuery({
+    queryKey: ['upcoming-events'],
+    queryFn: async () => {
+      const today = new Date();
+      const { data: events } = await supabase
+        .from('events')
+        .select('*')
+        .gte('event_date', today.toISOString())
+        .order('event_date', { ascending: true })
+        .limit(4);
+
+      return events?.map(event => ({
+        id: event.id,
+        title: event.title || 'Untitled Event',
+        date: new Date(event.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        time: event.event_time || 'TBD',
+        location: event.location || undefined,
+        type: (event.event_type || 'event') as 'academic' | 'event' | 'deadline' | 'personal',
+        attendees: event.max_attendees || undefined
+      })) || [];
     }
-  ];
+  });
+
+  // Get event dates for calendar highlighting
+  const { data: eventDates = [] } = useQuery({
+    queryKey: ['event-dates'],
+    queryFn: async () => {
+      const today = new Date();
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      
+      const { data: events } = await supabase
+        .from('events')
+        .select('event_date')
+        .gte('event_date', today.toISOString())
+        .lte('event_date', endOfMonth.toISOString());
+
+      return events?.map(e => new Date(e.event_date).getDate()) || [];
+    }
+  });
 
   const getEventTypeColor = (type: string) => {
     switch (type) {
@@ -108,10 +115,9 @@ export const CalendarWidget = () => {
                 {day}
               </div>
             ))}
-            {/* Sample dates - in a real app, this would be dynamically generated */}
             {Array.from({ length: 30 }, (_, i) => i + 1).map((date) => {
-              const hasEvent = [25, 28, 30].includes(date); // Sample event dates
-              const isToday = date === 19; // Sample current date
+              const hasEvent = eventDates.includes(date);
+              const isToday = date === new Date().getDate();
               
               return (
                 <button
@@ -133,51 +139,57 @@ export const CalendarWidget = () => {
           {/* Upcoming Events */}
           <div>
             <h4 className="font-semibold text-gray-900 mb-3">Upcoming Events</h4>
-            <div className="space-y-3">
-              {upcomingEvents.map((event) => (
-                <div 
-                  key={event.id}
-                  className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 text-center">
-                      <div className="text-2xl mb-1">{getEventTypeIcon(event.type)}</div>
-                      <div className="text-xs font-medium text-gray-600">{event.date}</div>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-1">
-                        <h5 className="font-semibold text-gray-900 text-sm">{event.title}</h5>
-                        <Badge className={getEventTypeColor(event.type) + ' text-xs'}>
-                          {event.type}
-                        </Badge>
+            {isLoading ? (
+              <p className="text-center text-gray-500 py-4">Loading events...</p>
+            ) : upcomingEvents.length > 0 ? (
+              <div className="space-y-3">
+                {upcomingEvents.map((event) => (
+                  <div 
+                    key={event.id}
+                    className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 text-center">
+                        <div className="text-2xl mb-1">{getEventTypeIcon(event.type)}</div>
+                        <div className="text-xs font-medium text-gray-600">{event.date}</div>
                       </div>
                       
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2 text-xs text-gray-600">
-                          <Clock className="h-3 w-3" />
-                          <span>{event.time}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-1">
+                          <h5 className="font-semibold text-gray-900 text-sm">{event.title}</h5>
+                          <Badge className={getEventTypeColor(event.type) + ' text-xs'}>
+                            {event.type}
+                          </Badge>
                         </div>
                         
-                        {event.location && (
+                        <div className="space-y-1">
                           <div className="flex items-center space-x-2 text-xs text-gray-600">
-                            <MapPin className="h-3 w-3" />
-                            <span>{event.location}</span>
+                            <Clock className="h-3 w-3" />
+                            <span>{event.time}</span>
                           </div>
-                        )}
-                        
-                        {event.attendees && (
-                          <div className="flex items-center space-x-2 text-xs text-gray-600">
-                            <Users className="h-3 w-3" />
-                            <span>{event.attendees} attendees</span>
-                          </div>
-                        )}
+                          
+                          {event.location && (
+                            <div className="flex items-center space-x-2 text-xs text-gray-600">
+                              <MapPin className="h-3 w-3" />
+                              <span>{event.location}</span>
+                            </div>
+                          )}
+                          
+                          {event.attendees && (
+                            <div className="flex items-center space-x-2 text-xs text-gray-600">
+                              <Users className="h-3 w-3" />
+                              <span>{event.attendees} attendees</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-gray-500 py-4">No upcoming events</p>
+            )}
           </div>
 
           <Button variant="outline" className="w-full">

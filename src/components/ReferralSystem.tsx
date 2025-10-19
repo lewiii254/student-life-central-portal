@@ -11,34 +11,111 @@ import {
   MessageCircle,
   Trophy,
   Star,
-  Coins
+  Coins,
+  Award
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Referral {
+  id: string;
+  referred_user_name: string;
+  status: string;
+  reward: number;
+  created_at: string;
+}
 
 export const ReferralSystem = () => {
   const { user } = useAuth();
   const [referralCode] = useState(`CC${user?.id?.slice(0, 6).toUpperCase() || 'DEMO'}`);
   
-  const referralStats = {
-    totalReferrals: 8,
-    successfulReferrals: 5,
-    pendingReferrals: 3,
-    totalEarnings: 250,
-    currentLevel: 'Bronze Referrer'
+  // Fetch real referral data from database
+  const { data: referralData, isLoading } = useQuery({
+    queryKey: ['referral-data', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+
+      // Fetch referral stats
+      const { data: referrals } = await supabase
+        .from('referrals')
+        .select('*')
+        .eq('referrer_id', user.id);
+
+      const totalReferrals = referrals?.length || 0;
+      const successfulReferrals = referrals?.filter(r => r.status === 'completed').length || 0;
+      const pendingReferrals = referrals?.filter(r => r.status === 'pending').length || 0;
+      const totalEarnings = referrals?.reduce((sum, r) => sum + (r.reward || 0), 0) || 0;
+
+      // Determine current level
+      let currentLevel = 'Bronze Referrer';
+      if (successfulReferrals >= 20) currentLevel = 'Campus Ambassador';
+      else if (successfulReferrals >= 10) currentLevel = 'Gold Referrer';
+      else if (successfulReferrals >= 5) currentLevel = 'Silver Referrer';
+
+      // Format recent referrals
+      const recentReferrals = referrals
+        ?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 3)
+        .map(r => ({
+          name: r.referred_user_name || 'Anonymous User',
+          status: r.status || 'pending',
+          reward: r.reward || 50,
+          date: new Date(r.created_at).toLocaleDateString()
+        })) || [];
+
+      return {
+        totalReferrals,
+        successfulReferrals,
+        pendingReferrals,
+        totalEarnings,
+        currentLevel,
+        recentReferrals
+      };
+    },
+    enabled: !!user?.id
+  });
+
+  // Default values if no data yet
+  const referralStats = referralData || {
+    totalReferrals: 0,
+    successfulReferrals: 0,
+    pendingReferrals: 0,
+    totalEarnings: 0,
+    currentLevel: 'Bronze Referrer',
+    recentReferrals: []
   };
 
-  const recentReferrals = [
-    { name: 'John M.', status: 'completed', reward: 50, date: '2 days ago' },
-    { name: 'Sarah K.', status: 'pending', reward: 50, date: '1 week ago' },
-    { name: 'Mike O.', status: 'completed', reward: 50, date: '2 weeks ago' }
-  ];
-
   const referralLevels = [
-    { name: 'Bronze Referrer', min: 0, max: 4, reward: 50, current: true },
-    { name: 'Silver Referrer', min: 5, max: 9, reward: 75, current: false },
-    { name: 'Gold Referrer', min: 10, max: 19, reward: 100, current: false },
-    { name: 'Campus Ambassador', min: 20, max: Infinity, reward: 150, current: false }
+    { 
+      name: 'Bronze Referrer', 
+      min: 0, 
+      max: 4, 
+      reward: 50, 
+      current: referralStats.successfulReferrals >= 0 && referralStats.successfulReferrals <= 4 
+    },
+    { 
+      name: 'Silver Referrer', 
+      min: 5, 
+      max: 9, 
+      reward: 75, 
+      current: referralStats.successfulReferrals >= 5 && referralStats.successfulReferrals <= 9 
+    },
+    { 
+      name: 'Gold Referrer', 
+      min: 10, 
+      max: 19, 
+      reward: 100, 
+      current: referralStats.successfulReferrals >= 10 && referralStats.successfulReferrals <= 19 
+    },
+    { 
+      name: 'Campus Ambassador', 
+      min: 20, 
+      max: Infinity, 
+      reward: 150, 
+      current: referralStats.successfulReferrals >= 20 
+    }
   ];
 
   const copyReferralCode = () => {
@@ -209,22 +286,28 @@ Download now: https://campusconnect.co.ke
           <CardTitle>Recent Referrals</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {recentReferrals.map((referral, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <div className="font-medium text-gray-900">{referral.name}</div>
-                  <div className="text-sm text-gray-600">{referral.date}</div>
+          {isLoading ? (
+            <p className="text-center text-gray-500 py-4">Loading referrals...</p>
+          ) : referralStats.recentReferrals.length > 0 ? (
+            <div className="space-y-3">
+              {referralStats.recentReferrals.map((referral, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <div className="font-medium text-gray-900">{referral.name}</div>
+                    <div className="text-sm text-gray-600">{referral.date}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-green-600">+KES {referral.reward}</div>
+                    <Badge className={getStatusColor(referral.status)}>
+                      {referral.status}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-bold text-green-600">+KES {referral.reward}</div>
-                  <Badge className={getStatusColor(referral.status)}>
-                    {referral.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500 py-4">No referrals yet. Start sharing your code!</p>
+          )}
         </CardContent>
       </Card>
     </div>
