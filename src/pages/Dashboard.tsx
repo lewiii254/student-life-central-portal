@@ -8,13 +8,25 @@ import {
   Gift,
   MessageSquare,
   Star,
-  ArrowLeft
+  ArrowLeft,
+  Wallet,
+  Bell,
+  Calendar,
+  Heart,
+  BarChart3
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { StudentDashboard } from '@/components/StudentDashboard';
 import { ProgressTracker } from '@/components/ProgressTracker';
 import { FeedbackSystem } from '@/components/FeedbackSystem';
 import { ReferralSystem } from '@/components/ReferralSystem';
+import { BudgetTracker } from '@/components/BudgetTracker';
+import { WalletCard } from '@/components/WalletCard';
+import { UpcomingDeadlines } from '@/components/UpcomingDeadlines';
+import { SavedItems } from '@/components/SavedItems';
+import { PersonalAnalytics } from '@/components/PersonalAnalytics';
+import { NotificationsCenter } from '@/components/NotificationsCenter';
+import { CalendarWidget } from '@/components/CalendarWidget';
 
 const Dashboard = () => {
   // Sample progress data
@@ -74,34 +86,83 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-8 mb-8 h-auto">
             <TabsTrigger value="overview" className="flex items-center space-x-2">
               <LayoutDashboard className="w-4 h-4" />
-              <span>Overview</span>
+              <span className="hidden md:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="progress" className="flex items-center space-x-2">
+            <TabsTrigger value="wallet" className="flex items-center space-x-2">
+              <Wallet className="w-4 h-4" />
+              <span className="hidden md:inline">Wallet</span>
+            </TabsTrigger>
+            <TabsTrigger value="budget" className="flex items-center space-x-2">
               <TrendingUp className="w-4 h-4" />
-              <span>Progress</span>
+              <span className="hidden md:inline">Budget</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center space-x-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden md:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center space-x-2">
+              <Calendar className="w-4 h-4" />
+              <span className="hidden md:inline">Calendar</span>
+            </TabsTrigger>
+            <TabsTrigger value="saved" className="flex items-center space-x-2">
+              <Heart className="w-4 h-4" />
+              <span className="hidden md:inline">Saved</span>
             </TabsTrigger>
             <TabsTrigger value="referrals" className="flex items-center space-x-2">
               <Gift className="w-4 h-4" />
-              <span>Referrals</span>
+              <span className="hidden md:inline">Referrals</span>
             </TabsTrigger>
             <TabsTrigger value="feedback" className="flex items-center space-x-2">
               <Star className="w-4 h-4" />
-              <span>Feedback</span>
+              <span className="hidden md:inline">Feedback</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
-            <StudentDashboard />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <StudentDashboard />
+              </div>
+              <div className="space-y-6">
+                <NotificationsCenter />
+                <UpcomingDeadlines />
+              </div>
+            </div>
           </TabsContent>
 
-          <TabsContent value="progress">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">Track Your Activities</h2>
-              <ProgressTracker {...orderProgress} />
+          <TabsContent value="wallet">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <WalletCard />
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-gray-900">Track Your Activities</h2>
+                <ProgressTracker {...orderProgress} />
+              </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="budget">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <BudgetTracker />
+              <PersonalAnalytics />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <PersonalAnalytics />
+          </TabsContent>
+
+          <TabsContent value="calendar">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CalendarWidget />
+              <UpcomingDeadlines />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="saved">
+            <SavedItems />
           </TabsContent>
 
           <TabsContent value="referrals">
