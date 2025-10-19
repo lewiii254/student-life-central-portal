@@ -11,9 +11,6 @@ interface AuthGuardProps {
 const AuthGuard = ({ children }: AuthGuardProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
-
-  // Demo mode: Allow access to admin dashboard for testing
-  const isDemoMode = location.pathname.startsWith('/admin');
   
   if (loading) {
     return (
@@ -26,7 +23,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     );
   }
 
-  if (!user && !isDemoMode) {
+  if (!user) {
     return <Navigate to="/auth" replace />;
   }
 

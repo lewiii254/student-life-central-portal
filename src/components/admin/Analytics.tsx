@@ -22,41 +22,165 @@ import {
   BarChart,
   Bar,
   PieChart as RechartsPieChart,
+  Pie,
   Cell
 } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+interface RevenueData {
+  month: string;
+  revenue: number;
+  orders: number;
+}
+
+interface ServiceData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface UserGrowthData {
+  month: string;
+  users: number;
+}
 
 export const Analytics = () => {
-  // Sample data - in real app, fetch from database
-  const revenueData = [
-    { month: 'Jan', revenue: 12000, orders: 45 },
-    { month: 'Feb', revenue: 15000, orders: 52 },
-    { month: 'Mar', revenue: 18000, orders: 68 },
-    { month: 'Apr', revenue: 22000, orders: 75 },
-    { month: 'May', revenue: 25000, orders: 89 },
-    { month: 'Jun', revenue: 28000, orders: 95 }
-  ];
+  // Fetch real analytics data
+  const { data: analyticsData, isLoading } = useQuery({
+    queryKey: ['analytics-data'],
+    queryFn: async () => {
+      // Get current year data
+      const currentYear = new Date().getFullYear();
+      const startOfYear = new Date(currentYear, 0, 1).toISOString();
+      
+      // Fetch orders data
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('created_at, total_amount')
+        .gte('created_at', startOfYear)
+        .order('created_at', { ascending: true });
 
-  const serviceData = [
-    { name: 'Study Essentials', value: 35, color: '#8884d8' },
-    { name: 'Rental Help', value: 25, color: '#82ca9d' },
-    { name: 'Delivery Services', value: 20, color: '#ffc658' },
-    { name: 'Bicycle Rentals', value: 12, color: '#ff7300' },
-    { name: 'Events', value: 8, color: '#00ff88' }
-  ];
+      // Fetch total counts for KPIs
+      const [ordersCount, usersCount, eventsCount] = await Promise.all([
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('events').select('*', { count: 'exact', head: true })
+      ]);
 
-  const userGrowthData = [
-    { month: 'Jan', users: 150 },
-    { month: 'Feb', users: 280 },
-    { month: 'Mar', users: 420 },
-    { month: 'Apr', users: 650 },
-    { month: 'May', users: 890 },
-    { month: 'Jun', users: 1200 }
-  ];
+      // Calculate revenue by month
+      const monthlyRevenue: Record<string, { revenue: number; orders: number }> = {};
+      orders?.forEach(order => {
+        const date = new Date(order.created_at);
+        const monthKey = date.toLocaleString('default', { month: 'short' });
+        if (!monthlyRevenue[monthKey]) {
+          monthlyRevenue[monthKey] = { revenue: 0, orders: 0 };
+        }
+        monthlyRevenue[monthKey].revenue += order.total_amount || 0;
+        monthlyRevenue[monthKey].orders += 1;
+      });
+
+      // Format revenue data for charts
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const revenueData: RevenueData[] = months.map(month => ({
+        month,
+        revenue: monthlyRevenue[month]?.revenue || 0,
+        orders: monthlyRevenue[month]?.orders || 0
+      }));
+
+      // Calculate total revenue
+      const totalRevenue = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+
+      return {
+        totalRevenue,
+        totalOrders: ordersCount.count || 0,
+        totalUsers: usersCount.count || 0,
+        totalEvents: eventsCount.count || 0,
+        revenueData: revenueData.filter(d => d.revenue > 0 || d.orders > 0)
+      };
+    }
+  });
+
+  // Fetch service usage data
+  const { data: serviceData = [] } = useQuery({
+    queryKey: ['service-usage'],
+    queryFn: async () => {
+      const [orders, rentals, deliveries, bicycles, events] = await Promise.all([
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
+        supabase.from('rental_requests').select('*', { count: 'exact', head: true }),
+        supabase.from('delivery_requests').select('*', { count: 'exact', head: true }),
+        supabase.from('bicycle_bookings').select('*', { count: 'exact', head: true }),
+        supabase.from('events').select('*', { count: 'exact', head: true })
+      ]);
+
+      const total = (orders.count || 0) + (rentals.count || 0) + (deliveries.count || 0) + 
+                    (bicycles.count || 0) + (events.count || 0);
+
+      if (total === 0) return [];
+
+      const serviceData: ServiceData[] = [
+        { name: 'Study Essentials', value: Math.round(((orders.count || 0) / total) * 100), color: '#8884d8' },
+        { name: 'Rental Help', value: Math.round(((rentals.count || 0) / total) * 100), color: '#82ca9d' },
+        { name: 'Delivery Services', value: Math.round(((deliveries.count || 0) / total) * 100), color: '#ffc658' },
+        { name: 'Bicycle Rentals', value: Math.round(((bicycles.count || 0) / total) * 100), color: '#ff7300' },
+        { name: 'Events', value: Math.round(((events.count || 0) / total) * 100), color: '#00ff88' }
+      ];
+
+      return serviceData.filter(s => s.value > 0);
+    }
+  });
+
+  // Fetch user growth data
+  const { data: userGrowthData = [] } = useQuery({
+    queryKey: ['user-growth'],
+    queryFn: async () => {
+      const currentYear = new Date().getFullYear();
+      const startOfYear = new Date(currentYear, 0, 1).toISOString();
+      
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('created_at')
+        .gte('created_at', startOfYear)
+        .order('created_at', { ascending: true });
+
+      // Calculate cumulative users by month
+      const monthlyUsers: Record<string, number> = {};
+      let cumulativeCount = 0;
+      
+      profiles?.forEach(profile => {
+        const date = new Date(profile.created_at);
+        const monthKey = date.toLocaleString('default', { month: 'short' });
+        cumulativeCount++;
+        monthlyUsers[monthKey] = cumulativeCount;
+      });
+
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const growthData: UserGrowthData[] = months
+        .map(month => ({
+          month,
+          users: monthlyUsers[month] || 0
+        }))
+        .filter(d => d.users > 0);
+
+      return growthData;
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Activity className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
+          <p className="text-gray-600">Loading analytics...</p>
+        </div>
+      </div>
+    );
+  }
 
   const kpiCards = [
     {
       title: 'Total Revenue',
-      value: 'KES 120,000',
+      value: `KES ${analyticsData?.totalRevenue?.toLocaleString() || 0}`,
       change: '+15%',
       icon: DollarSign,
       color: 'text-green-600',
@@ -64,7 +188,7 @@ export const Analytics = () => {
     },
     {
       title: 'Active Users',
-      value: '1,247',
+      value: analyticsData?.totalUsers?.toLocaleString() || '0',
       change: '+23%',
       icon: Users,
       color: 'text-blue-600',
@@ -72,7 +196,7 @@ export const Analytics = () => {
     },
     {
       title: 'Total Orders',
-      value: '384',
+      value: analyticsData?.totalOrders?.toLocaleString() || '0',
       change: '+18%',
       icon: ShoppingCart,
       color: 'text-purple-600',
@@ -80,7 +204,7 @@ export const Analytics = () => {
     },
     {
       title: 'Events Hosted',
-      value: '28',
+      value: analyticsData?.totalEvents?.toLocaleString() || '0',
       change: '+12%',
       icon: Calendar,
       color: 'text-orange-600',
@@ -134,21 +258,27 @@ export const Analytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value) => [`KES ${value}`, 'Revenue']} />
-                <Line 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#8884d8" 
-                  strokeWidth={3}
-                  dot={{ fill: '#8884d8', strokeWidth: 2, r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {analyticsData?.revenueData && analyticsData.revenueData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={analyticsData.revenueData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`KES ${value}`, 'Revenue']} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#8884d8" 
+                    strokeWidth={3}
+                    dot={{ fill: '#8884d8', strokeWidth: 2, r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-gray-500">
+                No revenue data available yet
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -161,30 +291,46 @@ export const Analytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <RechartsPieChart>
-                <RechartsPieChart data={serviceData}>
-                  {serviceData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+            {serviceData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RechartsPieChart>
+                    <Pie
+                      data={serviceData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {serviceData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${value}%`, 'Usage']} />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+                <div className="mt-4 space-y-2">
+                  {serviceData.map((service) => (
+                    <div key={service.name} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: service.color }}
+                        ></div>
+                        <span className="text-sm text-gray-700">{service.name}</span>
+                      </div>
+                      <span className="text-sm font-semibold">{service.value}%</span>
+                    </div>
                   ))}
-                </RechartsPieChart>
-                <Tooltip formatter={(value) => [`${value}%`, 'Usage']} />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-            <div className="mt-4 space-y-2">
-              {serviceData.map((service) => (
-                <div key={service.name} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: service.color }}
-                    ></div>
-                    <span className="text-sm text-gray-700">{service.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold">{service.value}%</span>
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-gray-500">
+                No service usage data available yet
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -198,25 +344,31 @@ export const Analytics = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={userGrowthData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip formatter={(value) => [`${value}`, 'Users']} />
-              <Bar 
-                dataKey="users" 
-                fill="url(#colorGradient)"
-                radius={[4, 4, 0, 0]}
-              />
-              <defs>
-                <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#8884d8" stopOpacity={0.3}/>
-                </linearGradient>
-              </defs>
-            </BarChart>
-          </ResponsiveContainer>
+          {userGrowthData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={userGrowthData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip formatter={(value) => [`${value}`, 'Users']} />
+                <Bar 
+                  dataKey="users" 
+                  fill="url(#colorGradient)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <defs>
+                  <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0.3}/>
+                  </linearGradient>
+                </defs>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-gray-500">
+              No user growth data available yet
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

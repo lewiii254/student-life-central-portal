@@ -17,6 +17,14 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+interface Activity {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: string;
+  color: string;
+}
+
 export const DashboardStats = () => {
   // Fetch dashboard statistics
   const { data: stats, isLoading } = useQuery({
@@ -47,6 +55,87 @@ export const DashboardStats = () => {
         pendingRentals: rentalRequestsResult.count || 0,
         lowStockProducts: productsResult.data || []
       };
+    }
+  });
+
+  // Fetch recent activities from multiple sources
+  const { data: recentActivities = [] } = useQuery({
+    queryKey: ['recent-activities'],
+    queryFn: async () => {
+      const activities: Activity[] = [];
+      
+      // Fetch recent orders
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('id, created_at, user_id')
+        .order('created_at', { ascending: false })
+        .limit(2);
+      
+      orders?.forEach(order => {
+        activities.push({
+          id: `order-${order.id}`,
+          type: 'order',
+          description: 'New order received',
+          timestamp: order.created_at,
+          color: 'green'
+        });
+      });
+
+      // Fetch recent bicycle bookings
+      const { data: bookings } = await supabase
+        .from('bicycle_bookings')
+        .select('id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(2);
+      
+      bookings?.forEach(booking => {
+        activities.push({
+          id: `booking-${booking.id}`,
+          type: 'booking',
+          description: 'Bicycle rental booked',
+          timestamp: booking.created_at,
+          color: 'blue'
+        });
+      });
+
+      // Fetch recent rental inquiries
+      const { data: rentals } = await supabase
+        .from('rental_requests')
+        .select('id, created_at, area')
+        .order('created_at', { ascending: false })
+        .limit(2);
+      
+      rentals?.forEach(rental => {
+        activities.push({
+          id: `rental-${rental.id}`,
+          type: 'rental',
+          description: `New rental inquiry in ${rental.area || 'campus area'}`,
+          timestamp: rental.created_at,
+          color: 'yellow'
+        });
+      });
+
+      // Fetch recent event registrations (from events table)
+      const { data: events } = await supabase
+        .from('events')
+        .select('id, created_at, title')
+        .order('created_at', { ascending: false })
+        .limit(2);
+      
+      events?.forEach(event => {
+        activities.push({
+          id: `event-${event.id}`,
+          type: 'event',
+          description: `Event "${event.title}" created`,
+          timestamp: event.created_at,
+          color: 'purple'
+        });
+      });
+
+      // Sort all activities by timestamp and return the most recent 4
+      return activities
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 4);
     }
   });
 
@@ -158,28 +247,24 @@ export const DashboardStats = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                <p className="text-sm">New order received from John Doe</p>
-                <span className="text-xs text-gray-500">2 min ago</span>
+            {recentActivities.length > 0 ? (
+              <div className="space-y-4">
+                {recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-center space-x-3">
+                    <div className={`h-2 w-2 bg-${activity.color}-500 rounded-full`}></div>
+                    <p className="text-sm flex-1">{activity.description}</p>
+                    <span className="text-xs text-gray-500">
+                      {new Date(activity.timestamp).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-                <p className="text-sm">Bicycle rental booked for tomorrow</p>
-                <span className="text-xs text-gray-500">15 min ago</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
-                <p className="text-sm">New rental inquiry in Westlands</p>
-                <span className="text-xs text-gray-500">1 hour ago</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="h-2 w-2 bg-purple-500 rounded-full"></div>
-                <p className="text-sm">Event registration milestone reached</p>
-                <span className="text-xs text-gray-500">3 hours ago</span>
-              </div>
-            </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">No recent activity</p>
+            )}
           </CardContent>
         </Card>
       </div>
