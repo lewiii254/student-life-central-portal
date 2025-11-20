@@ -39,6 +39,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+type Product = Database['public']['Tables']['products']['Row'];
+type ProductUpdate = Partial<Database['public']['Tables']['products']['Update']>;
+
+interface Order {
+  id: string;
+  customer_name: string;
+  customer_contact: string;
+}
+
 export const NerdyCart = () => {
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -50,7 +59,7 @@ export const NerdyCart = () => {
     is_combo: false
   });
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch products
@@ -112,7 +121,7 @@ export const NerdyCart = () => {
 
   // Update product
   const updateProduct = useMutation({
-    mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
+    mutationFn: async ({ id, updates }: { id: string, updates: ProductUpdate }) => {
       const { error } = await supabase
         .from('products')
         .update({ ...updates, updated_at: new Date().toISOString() })
@@ -188,7 +197,7 @@ export const NerdyCart = () => {
     }
   };
 
-  const sendOrderNotification = (order: any) => {
+  const sendOrderNotification = (order: Order) => {
     const message = `Hi ${order.customer_name}! Your order is ready for pickup. Order ID: ${order.id.slice(0, 8)}. Please visit Campus Connect to collect your items.`;
     const whatsappUrl = `https://wa.me/${order.customer_contact.replace('+', '')}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');

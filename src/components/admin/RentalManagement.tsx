@@ -44,6 +44,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface NewHouseData {
+  title: string;
+  description: string;
+  price: string;
+  location: string;
+  sub_area: string;
+  bedrooms: string;
+  bathrooms: string;
+  features: string;
+  image_urls: string;
+  landlord_name: string;
+  landlord_contact: string;
+  landlord_whatsapp: string;
+}
+
 export const RentalManagement = () => {
   const [newLocation, setNewLocation] = useState({ name: '', description: '' });
   const [searchFee, setSearchFee] = useState(200);
@@ -204,7 +219,7 @@ export const RentalManagement = () => {
 
   // Add new house
   const addHouse = useMutation({
-    mutationFn: async (house: any) => {
+    mutationFn: async (house: NewHouseData) => {
       const houseData = {
         ...house,
         price: parseInt(house.price),

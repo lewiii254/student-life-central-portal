@@ -25,6 +25,12 @@ interface Activity {
   color: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  stock_quantity: number;
+}
+
 export const DashboardStats = () => {
   // Fetch dashboard statistics
   const { data: stats, isLoading } = useQuery({
@@ -217,7 +223,7 @@ export const DashboardStats = () => {
           <CardContent>
             {stats?.lowStockItems > 0 ? (
               <div className="space-y-3">
-                {stats.lowStockProducts.slice(0, 5).map((product: any) => (
+                {stats.lowStockProducts.slice(0, 5).map((product: Product) => (
                   <div key={product.id} className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
                     <div>
                       <p className="font-medium">{product.name}</p>
