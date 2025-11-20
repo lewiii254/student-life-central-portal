@@ -7,6 +7,26 @@ import { Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  rating: number;
+  inStock: boolean;
+}
+
+interface ComboProduct {
+  id: string;
+  name: string;
+  items: string[];
+  originalPrice: number;
+  comboPrice: number;
+  savings: number;
+  image: string;
+}
+
 const StudyEssentials = () => {
   const { addToCart, getTotalItems } = useCart();
 
@@ -97,7 +117,7 @@ const StudyEssentials = () => {
     }
   ];
 
-  const handleAddToCart = (item: any, type: 'product' | 'combo') => {
+  const handleAddToCart = (item: Product | ComboProduct, type: 'product' | 'combo') => {
     const cartItem = {
       id: item.id,
       name: item.name,

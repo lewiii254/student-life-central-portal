@@ -24,6 +24,34 @@ interface ActivityItem {
   details?: string;
 }
 
+interface Profile {
+  full_name: string | null;
+}
+
+interface OrderActivity {
+  id: string;
+  created_at: string;
+  total_amount: number | null;
+  user_id: string;
+  profiles: Profile | null;
+}
+
+interface RentalActivity {
+  id: string;
+  created_at: string;
+  area: string | null;
+  user_id: string;
+  profiles: Profile | null;
+}
+
+interface BicycleActivity {
+  id: string;
+  created_at: string;
+  rental_start: string;
+  user_id: string;
+  profiles: Profile | null;
+}
+
 export const LiveActivityFeed = () => {
   // Fetch real activities from database
   const { data: activities = [], isLoading } = useQuery({
@@ -38,8 +66,8 @@ export const LiveActivityFeed = () => {
         .order('created_at', { ascending: false })
         .limit(3);
       
-      orders?.forEach(order => {
-        const userName = (order.profiles as any)?.full_name || 'A Student';
+      (orders as OrderActivity[] | null)?.forEach(order => {
+        const userName = order.profiles?.full_name || 'A Student';
         activityList.push({
           id: `order-${order.id}`,
           type: 'order',
@@ -57,8 +85,8 @@ export const LiveActivityFeed = () => {
         .order('created_at', { ascending: false })
         .limit(3);
       
-      rentals?.forEach(rental => {
-        const userName = (rental.profiles as any)?.full_name || 'A Student';
+      (rentals as RentalActivity[] | null)?.forEach(rental => {
+        const userName = rental.profiles?.full_name || 'A Student';
         activityList.push({
           id: `rental-${rental.id}`,
           type: 'rental',
@@ -75,8 +103,8 @@ export const LiveActivityFeed = () => {
         .order('created_at', { ascending: false })
         .limit(3);
       
-      bicycles?.forEach(booking => {
-        const userName = (booking.profiles as any)?.full_name || 'A Student';
+      (bicycles as BicycleActivity[] | null)?.forEach(booking => {
+        const userName = booking.profiles?.full_name || 'A Student';
         activityList.push({
           id: `bicycle-${booking.id}`,
           type: 'bicycle',

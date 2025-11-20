@@ -6,6 +6,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Home, ArrowLeft, ShoppingCart, Star, Users, MapPin, Clock, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 
+interface HouseholdItem {
+  name: string;
+  price: string;
+  description: string;
+  image: string;
+  rating: number;
+  inStock: boolean;
+  studentFriendly: string;
+  shop?: string;
+  condition?: string;
+}
+
 const HouseholdItems = () => {
   const newItems = [
     {
@@ -124,7 +136,7 @@ const HouseholdItems = () => {
     window.open(url, '_blank');
   };
 
-  const ItemCard = ({ item, isSecondHand = false }: { item: any, isSecondHand?: boolean }) => (
+  const ItemCard = ({ item, isSecondHand = false }: { item: HouseholdItem, isSecondHand?: boolean }) => (
     <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-200 overflow-hidden">
       <CardHeader className="p-0">
         <div className="relative">
